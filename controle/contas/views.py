@@ -8,7 +8,7 @@ def login_page(request):
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             login(request, form.get_user())
-            return redirect('dispositivos:listar_dispositivos')
+            return redirect('home')
 
         messages.error(request, "Usuário ou senha incorretos.")
     else:
