@@ -53,8 +53,8 @@
             <tr>
                 <th>Código</th>
                 <th>Tipo</th>
+                <th>Status</th> 
                 <th>Funcionário</th>
-                <th>Status</th>
                 <th>Equipamentos Aux.</th>
                 <th width="180">Ações</th>
             </tr>
@@ -65,19 +65,19 @@
                 <td class="codigo-item"><strong>{{ dispositivo.codigo }}</strong></td>
                 <td>{{ dispositivo.get_tipo_dispositivo_display }}</td>
                 <td>
-                    {% if dispositivo.funcionario %}
-                        {{ dispositivo.funcionario.nome }}
-                    {% else %}
-                        <span class="text-muted">—</span>
-                    {% endif %}
-                </td>
-                <td>
                     {% if dispositivo.status == 'ATIVO' %}
                         <span class="badge bg-success">Ativo</span>
                     {% elif dispositivo.status == 'MANUTENCAO' %}
                         <span class="badge bg-warning text-dark">Manutenção</span>
                     {% else %}
                         <span class="badge bg-secondary">Disponível</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if dispositivo.funcionario %}
+                        {{ dispositivo.funcionario.nome }}
+                    {% else %}
+                        <span class="text-muted">—</span>
                     {% endif %}
                 </td>
                 <td>
