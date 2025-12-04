@@ -1,0 +1,28 @@
+<div class="mb-3">
+    <h5>{{ funcionario.nome }} <small class="text-muted">({{ funcionario.get_status_display }})</small></h5>
+    <hr>
+</div>
+
+<ul class="timeline list-group list-group-flush">
+    {% for h in historico %}
+    <li class="list-group-item d-flex justify-content-between align-items-start">
+        <div class="ms-2 me-auto">
+            <div class="fw-bold">
+                {% if h.acao == 'DEMITIDO' %}
+                    <span class="badge bg-danger">Demitido</span>
+                {% elif h.acao == 'CONTRATADO' %}
+                    <span class="badge bg-success">Contratado</span>
+                {% elif h.acao == 'TRANSFERIDO' %}
+                    <span class="badge bg-info text-dark">Transferido</span>
+                {% else %}
+                    <span class="badge bg-secondary">{{ h.acao }}</span>
+                {% endif %}
+            </div>
+            {{ h.descricao }}
+        </div>
+        <span class="badge bg-light text-dark">{{ h.data|date:"d/m/Y H:i" }}</span>
+    </li>
+    {% empty %}
+    <li class="list-group-item text-center text-muted">Nenhum histórico registrado.</li>
+    {% endfor %}
+</ul>

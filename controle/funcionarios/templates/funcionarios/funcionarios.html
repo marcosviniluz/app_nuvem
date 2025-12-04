@@ -1,0 +1,345 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Funcionários{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gerenciamento de Funcionários</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCriar">
+            <i class="bi bi-person-plus"></i> Novo Funcionário
+        </button>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <input type="text" id="busca" class="form-control" placeholder="🔍 Buscar por nome...">
+                </div>
+                <div class="col-md-4">
+                    <select id="filtroUnidade" class="form-select">
+                        <option value="">Todas as Unidades</option>
+                        {% for u in unidades %}
+                            <option value="{{ u.id }}">{{ u.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="ativos-tab" data-bs-toggle="tab" data-bs-target="#tab-ativos" type="button">Ativos</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-danger" id="demitidos-tab" data-bs-toggle="tab" data-bs-target="#tab-demitidos" type="button">Histórico / Demitidos</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="myTabContent">
+        
+        <div class="tab-pane fade show active" id="tab-ativos">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Unidade</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaAtivos">
+                    {% for f in ativos %}
+                        <tr data-nome="{{ f.nome|lower }}" data-unidade="{{ f.unidade_trabalho.id }}">
+                            <td><strong>{{ f.nome }}</strong></td>
+                            <td>{{ f.email }}</td>
+                            <td>
+                                {% if f.unidade_trabalho %}
+                                    <span class="badge bg-secondary">{{ f.unidade_trabalho.nome }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-info btnHistorico" data-id="{{ f.id }}">
+                                    Histórico
+                                </button>
+                                
+                                <button class="btn btn-sm btn-warning btnEditar" data-id="{{ f.id }}">
+                                    Editar
+                                </button>
+
+                                <button class="btn btn-sm btn-outline-danger btnDemitir" 
+                                        data-id="{{ f.id }}" 
+                                        data-nome="{{ f.nome }}">
+                                    Demitir
+                                </button>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center">Nenhum funcionário ativo.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-demitidos">
+            <div class="table-responsive">
+                <table class="table table-striped align-middle text-muted">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Data Demissão</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaInativos">
+                    {% for f in demitidos %}
+                        <tr data-nome="{{ f.nome|lower }}" data-unidade="{{ f.unidade_trabalho.id }}">
+                            <td>{{ f.nome }}</td>
+                            <td>{{ f.email }}</td>
+                            <td>{{ f.data_demissao|date:"d/m/Y" }}</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-secondary btnHistorico" data-id="{{ f.id }}">Histórico</button>
+                                <a href="{% url 'funcionarios:reativar_funcionario' f.id %}" 
+                                   class="btn btn-sm btn-outline-success"
+                                   onclick="return confirm('Deseja recontratar este funcionário?')">
+                                    Recontratar
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center">Nenhum registro histórico.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="modalCriar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{% url 'funcionarios:criar_funcionario' %}">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo Funcionário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input type="text" name="nome" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Unidade</label>
+                        <select name="unidade_trabalho" class="form-select">
+                            <option value="">Selecione...</option>
+                            {% for u in unidades %}
+                                <option value="{{ u.id }}">{{ u.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="formEditar" method="POST">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Funcionário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input type="text" id="editNome" name="nome" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="editEmail" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Unidade</label>
+                        <select id="editUnidade" name="unidade_trabalho" class="form-select">
+                            <option value="">Selecione...</option>
+                            {% for u in unidades %}
+                                <option value="{{ u.id }}">{{ u.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalHistorico" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Histórico Completo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="conteudoHistorico">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Carregando histórico...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDemitir" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="formDemitir" method="POST">
+            {% csrf_token %}
+            <div class="modal-content border-danger">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirmar Demissão</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja demitir <strong id="nomeDemitir"></strong>?</p>
+                    <div class="alert alert-warning">
+                        <small>
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            Isso irá <strong>desvincular</strong> todos os dispositivos (Notebooks, Impressoras) 
+                            e equipamentos auxiliares desta pessoa e devolvê-los ao estoque.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Demissão</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // --- 1. BUSCA POR NOME (Aplica para as duas tabelas) ---
+    const inputBusca = document.getElementById("busca");
+    inputBusca.addEventListener("input", function() {
+        const termo = this.value.toLowerCase();
+        document.querySelectorAll("tbody tr").forEach(row => {
+            const nome = row.dataset.nome;
+            if(nome) {
+                row.style.display = nome.includes(termo) ? "" : "none";
+            }
+        });
+    });
+
+    // --- 2. FILTRO POR UNIDADE ---
+    const selectUnidade = document.getElementById("filtroUnidade");
+    selectUnidade.addEventListener("change", function() {
+        const unidadeId = this.value;
+        document.querySelectorAll("tbody tr").forEach(row => {
+            const rowUnidade = row.dataset.unidade;
+            // Se unidadeId for vazio (todos) ou bater com a linha
+            if(unidadeId === "" || rowUnidade === unidadeId) {
+                // Só mostra se também passar no filtro de busca (opcional, aqui resetei)
+                row.style.display = ""; 
+            } else {
+                row.style.display = "none";
+            }
+        });
+        // Disparar o evento de busca para garantir que ambos filtros funcionem juntos
+        inputBusca.dispatchEvent(new Event('input'));
+    });
+
+    // --- 3. ABRIR MODAL EDITAR (AJAX) ---
+    // Usamos 'delegate' event (document.body) caso adicione linhas dinamicamente no futuro
+    document.body.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btnEditar')) {
+            const btn = e.target;
+            const id = btn.dataset.id;
+            const modal = new bootstrap.Modal(document.getElementById('modalEditar'));
+            
+            // Busca dados
+            fetch(`/funcionarios/api/get/${id}/`)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById("editNome").value = data.nome;
+                    document.getElementById("editEmail").value = data.email;
+                    document.getElementById("editUnidade").value = data.unidade_trabalho;
+                    document.getElementById("formEditar").action = `/funcionarios/editar/${id}/`;
+                    
+                    modal.show();
+                })
+                .catch(err => alert("Erro ao carregar dados."));
+        }
+    });
+
+    // --- 4. ABRIR MODAL DEMITIR ---
+    document.body.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btnDemitir')) {
+            const btn = e.target;
+            const id = btn.dataset.id;
+            const nome = btn.dataset.nome;
+            
+            document.getElementById("nomeDemitir").innerText = nome;
+            document.getElementById("formDemitir").action = `/funcionarios/demitir/${id}/`;
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalDemitir'));
+            modal.show();
+        }
+    });
+
+    // --- 5. ABRIR MODAL HISTÓRICO (AJAX HTML) ---
+    document.body.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btnHistorico')) {
+            const btn = e.target;
+            const id = btn.dataset.id;
+            const modal = new bootstrap.Modal(document.getElementById('modalHistorico'));
+            const container = document.getElementById("conteudoHistorico");
+            
+            // Mostra loading
+            modal.show();
+            container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
+
+            // Busca HTML parcial
+            fetch(`/funcionarios/historico/${id}/`)
+                .then(r => r.text())
+                .then(html => {
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    container.innerHTML = '<p class="text-danger text-center">Erro ao carregar histórico.</p>';
+                });
+        }
+    });
+
+});
+</script>
+{% endblock %}

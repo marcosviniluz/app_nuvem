@@ -1,0 +1,76 @@
+<div class="modal-header">
+    <h5 class="modal-title">
+        Equipamentos Auxiliares
+        <br>
+        <small class="text-muted fs-6">{{ dispositivo.codigo }} - {{ dispositivo.get_tipo_dispositivo_display }}</small>
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in equipamentos %}
+                <tr>
+                    <td><strong>{{ item.nome }}</strong></td>
+                    <td>{{ item.get_tipo_equipamento_aux_display }}</td>
+                    <td>
+                        {% if item.status == 'ATIVO' %}
+                            <span class="badge bg-success">Ativo</span>
+                        {% elif item.status == 'DISPONIVEL' %}
+                            <span class="badge bg-secondary">Disponível</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">{{ item.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'equipamentos:desvincular_equipamento' item.id %}" 
+                           class="btn btn-sm btn-outline-warning"
+                           title="Desvincular (Devolver ao estoque)"
+                           onclick="return confirm('Tem certeza que deseja desvincular este item?');">
+                            <i class="bi bi-link-45deg"></i> Desvincular
+                        </a>
+
+                        <a href="{% url 'equipamentos:deletar_equipamento' item.id %}" 
+                           class="btn btn-sm btn-outline-danger"
+                           title="Excluir permanentemente"
+                           onclick="return confirm('Tem certeza que deseja EXCLUIR este equipamento?');">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">
+                        Nenhum equipamento auxiliar vinculado.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal-footer bg-light">
+    <small class="text-muted me-auto">Total: {{ equipamentos.count }} itens</small>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+</div>

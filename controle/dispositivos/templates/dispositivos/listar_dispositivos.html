@@ -1,0 +1,261 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Dispositivos{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+    /* Garante que o dropdown do Select2 apareça na frente do Modal */
+    .select2-container--open {
+        z-index: 9999999 !important;
+    }
+    /* Ajuste de largura para ficar alinhado com o Bootstrap */
+    .select2-container .select2-selection--single {
+        height: 38px !important;
+        border: 1px solid #dee2e6 !important;
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+<h2 class="mb-4">Dispositivos</h2>
+
+<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalAddDispositivo">
+    Adicionar Dispositivo
+</button>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Tipo</th>
+                <th>Funcionário</th>
+                <th>Status</th>
+                <th>Equipamentos Aux.</th>
+                <th width="180">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dispositivo in dispositivos %}
+            <tr>
+                <td><strong>{{ dispositivo.codigo }}</strong></td>
+                <td>{{ dispositivo.get_tipo_dispositivo_display }}</td>
+                <td>
+                    {% if dispositivo.funcionario %}
+                        {{ dispositivo.funcionario.nome }}
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if dispositivo.status == 'ATIVO' %}
+                        <span class="badge bg-success">Ativo</span>
+                    {% elif dispositivo.status == 'MANUTENCAO' %}
+                        <span class="badge bg-warning text-dark">Manutenção</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Disponível</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info btnEquipamentos"
+                            data-id="{{ dispositivo.id }}"
+                            data-codigo="{{ dispositivo.codigo }}">
+                        Ver Itens
+                    </button>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-warning btnEditar"
+                        data-url="{% url 'dispositivos:editar_dispositivo' dispositivo.id %}"
+                        data-id="{{ dispositivo.id }}"
+                        data-codigo="{{ dispositivo.codigo }}"
+                        data-tipo="{{ dispositivo.tipo_dispositivo }}"
+                        data-funcionario="{% if dispositivo.funcionario %}{{ dispositivo.funcionario.id }}{% endif %}"
+                        data-status="{{ dispositivo.status }}">
+                        Editar
+                    </button>
+
+                    <a href="{% url 'dispositivos:deletar_dispositivo' dispositivo.id %}" 
+                       class="btn btn-sm btn-danger"
+                       onclick="return confirm('Tem certeza que deseja excluir este dispositivo?')">
+                       Excluir
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center">Nenhum dispositivo cadastrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="modalAddDispositivo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{% url 'dispositivos:criar_dispositivo' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Dispositivo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Código</label>
+                        <input type="text" name="codigo" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo</label>
+                        <select name="tipo_dispositivo" class="form-select" required>
+                            {% for value, label in tipos %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Funcionário</label>
+                        <select name="funcionario" class="form-select select2-pessoa">
+                            <option value="">— Nenhum —</option>
+                            {% for f in funcionarios %}
+                                <option value="{{ f.id }}">{{ f.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditDispositivo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="formEditar" method="POST">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Dispositivo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Código</label>
+                        <input type="text" id="editCodigo" name="codigo" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo</label>
+                        <select id="editTipo" name="tipo_dispositivo" class="form-select" required>
+                            {% for value, label in tipos %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Funcionário</label>
+                        <select id="editFuncionario" name="funcionario" class="form-select select2-pessoa">
+                            <option value="">— Nenhum —</option>
+                            {% for f in funcionarios %}
+                                <option value="{{ f.id }}">{{ f.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select id="editStatus" name="status" class="form-select" required>
+                            {% for val, lab in status %}
+                                <option value="{{ val }}">{{ lab }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEquipamentos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="equipamentosContent">
+            </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+
+    // --- CORREÇÃO PRINCIPAL: SELECT2 NO MODAL ---
+    // Percorre cada select e define o modal pai corretamente
+    $('.select2-pessoa').each(function() {
+        $(this).select2({
+            placeholder: "Selecione o funcionário",
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $(this).closest('.modal') // Isso faz a busca funcionar!
+        });
+    });
+
+    // Inicializa tooltips do Bootstrap (opcional, se usar title nos botões)
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Lógica do Botão Editar
+    $(".btnEditar").click(function () {
+        let url = $(this).data("url");
+        let codigo = $(this).data("codigo");
+        let tipo = $(this).data("tipo");
+        let funcionario = $(this).data("funcionario") || ""; // Garante string vazia se null
+        let status = $(this).data("status") || "DISPONIVEL";
+
+        // Preenche os campos normais
+        $("#editCodigo").val(codigo);
+        $("#editTipo").val(tipo).change();
+        $("#editStatus").val(status);
+
+        // Preenche o Select2 e força a atualização visual
+        $("#editFuncionario").val(funcionario).trigger("change");
+
+        // Define a URL de postagem e abre o modal
+        $("#formEditar").attr("action", url);
+        $("#modalEditDispositivo").modal("show");
+    });
+
+    // Lógica do Botão Equipamentos (AJAX)
+    $(".btnEquipamentos").click(function () {
+        let id = $(this).data("id");
+        let codigo = $(this).data("codigo");
+
+        $("#modalEquipamentos").modal("show");
+        $("#equipamentosContent").html("<div class='p-4 text-center'><div class='spinner-border text-primary'></div><p class='mt-2'>Carregando itens...</p></div>");
+
+        $.get("/equipamentos/dispositivo/"+id+"/", function(data){
+            $("#equipamentosContent").html(data);
+        }).fail(function() {
+            $("#equipamentosContent").html("<div class='modal-header'><h5 class='modal-title text-danger'>Erro</h5><button class='btn-close' data-bs-dismiss='modal'></button></div><div class='modal-body'>Não foi possível carregar os equipamentos.</div>");
+        });
+    });
+
+});
+</script>
+
+{% endblock %}
