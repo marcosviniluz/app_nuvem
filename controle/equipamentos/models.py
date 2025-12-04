@@ -6,7 +6,6 @@ TIPO_EQUIPAMENTO_AUX_CHOICES = [
     ('MOUSE', 'Mouse'),
     ('TECLADO', 'Teclado'),
     ('HEADSET', 'Headset'),
-    ('FONTE', 'Fonte'),
     ('MONITOR', 'Monitor'),
 ]
 

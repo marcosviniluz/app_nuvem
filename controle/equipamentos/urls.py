@@ -1,16 +1,18 @@
 from django.urls import path
 from . import views
 
-# O app_name é essencial para usar {% url 'equipamentos:nome_da_url' %}
 app_name = 'equipamentos'
 
 urlpatterns = [
-    # Rotas de Listagem (que também fazem o cadastro via POST)
-    # Note que mudei 'pessoa' para 'funcionario' para manter o padrão novo
+    # Rota Principal do Estoque (Dashboard)
+    path('dashboard/', views.dashboard_estoque, name='dashboard_estoque'),
+    
+    # Rota para dar entrada (Processamento do formulário)
+    path('entrada/', views.entrada_estoque, name='entrada_estoque'),
+
+    # ... (Mantenha suas rotas antigas de editar, deletar, etc) ...
     path('funcionario/<int:funcionario_id>/', views.equipamentos_funcionario, name='equipamentos_funcionario'),
     path('dispositivo/<int:dispositivo_id>/', views.equipamentos_dispositivo, name='equipamentos_dispositivo'),
-
-    # Rotas que FALTAVAM (Ações)
     path('editar/<int:id>/', views.editar_equipamento, name='editar_equipamento'),
     path('deletar/<int:id>/', views.deletar_equipamento, name='deletar_equipamento'),
     path('desvincular/<int:id>/', views.desvincular_equipamento, name='desvincular_equipamento'),

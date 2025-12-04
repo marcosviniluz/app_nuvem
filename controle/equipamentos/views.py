@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Count, Q
 from .models import EquipamentoAuxiliar, TIPO_EQUIPAMENTO_AUX_CHOICES
 from dispositivos.models import STATUS_CHOICES, Dispositivo
 from funcionarios.models import Funcionario
@@ -32,24 +33,47 @@ def equipamentos_funcionario(request, funcionario_id):
         "status_list": STATUS_CHOICES,
     })
 
-# --- ESSA É A FUNÇÃO QUE ESTAVA FALTANDO OU COM NOME ERRADO ---
+
 @login_required
 def equipamentos_dispositivo(request, dispositivo_id):
     dispositivo = get_object_or_404(Dispositivo, id=dispositivo_id)
-    # Note que usamos 'dispositivo_id' para filtrar
-    equipamentos = EquipamentoAuxiliar.objects.filter(dispositivo_id=dispositivo_id)
 
-    # O template deve ser aquele fragmento HTML que criamos (por_dispositivo.html)
+    if request.method == "POST":
+        item_id = request.POST.get("item_id")
+        
+        if item_id:
+
+            item = get_object_or_404(EquipamentoAuxiliar, id=item_id)
+            
+            
+            item.dispositivo = dispositivo
+            
+            if dispositivo.funcionario:
+                item.funcionario = dispositivo.funcionario
+            
+            item.save() 
+            
+            messages.success(request, f"{item.nome} vinculado com sucesso!")
+        else:
+            messages.error(request, "Selecione um item do estoque.")
+            
+        return redirect('dispositivos:listar_dispositivos')
+
+    
+    equipamentos_vinculados = EquipamentoAuxiliar.objects.filter(dispositivo_id=dispositivo_id)
+    
+    # Itens disponíveis no estoque (para o select de adicionar)
+    estoque_disponivel = EquipamentoAuxiliar.objects.filter(status='DISPONIVEL').order_by('tipo_equipamento_aux', 'nome')
+
     return render(request, "equipamentos/por_dispositivo.html", {
         "dispositivo": dispositivo,
-        "equipamentos": equipamentos,
+        "equipamentos": equipamentos_vinculados,
+        "estoque": estoque_disponivel, # Enviamos a lista de disponíveis
     })
-# ---------------------------------------------------------------
 
 @login_required
 def editar_equipamento(request, id):
     equipamento = get_object_or_404(EquipamentoAuxiliar, id=id)
-    # Guarda o ID para redirecionar de volta corretamente depois
     redirect_func_id = equipamento.funcionario.id if equipamento.funcionario else None
 
     if request.method == "POST":
@@ -60,10 +84,8 @@ def editar_equipamento(request, id):
         
         if redirect_func_id:
             return redirect('equipamentos:equipamentos_funcionario', funcionario_id=redirect_func_id)
-        # Se não tem funcionário, assume que veio da tela de dispositivos
         return redirect('dispositivos:listar_dispositivos')
 
-    # Se for GET ou outro método, redireciona para algum lugar seguro
     return redirect('dispositivos:listar_dispositivos')
 
 @login_required
@@ -92,3 +114,54 @@ def desvincular_equipamento(request, id):
     if redirect_func_id:
         return redirect('equipamentos:equipamentos_funcionario', funcionario_id=redirect_func_id)
     return redirect('dispositivos:listar_dispositivos')
+
+# --- CORRIGIDO: Removido espaço extra na identação ---
+@login_required
+def dashboard_estoque(request):
+    """
+    Mostra os cards com totais de cada tipo de equipamento.
+    """
+    metricas = EquipamentoAuxiliar.objects.values('tipo_equipamento_aux').annotate(
+        total=Count('id'),
+        disponiveis=Count('id', filter=Q(status='DISPONIVEL')),
+        ativos=Count('id', filter=Q(status='ATIVO')),
+        manutencao=Count('id', filter=Q(status='MANUTENCAO'))
+    ).order_by('tipo_equipamento_aux')
+
+    return render(request, 'equipamentos/dashboard.html', {
+        'metricas': metricas,
+        'tipos_aux': TIPO_EQUIPAMENTO_AUX_CHOICES, 
+    })
+
+@login_required
+def entrada_estoque(request):
+    """
+    Cria múltiplos itens de uma vez (Lote).
+    """
+    if request.method == "POST":
+        tipo = request.POST.get('tipo_equipamento_aux')
+        quantidade = int(request.POST.get('quantidade') or 0)
+        prefixo_nome = request.POST.get('prefixo_nome') or "Item de Estoque"
+
+        if quantidade < 1:
+            messages.error(request, "A quantidade deve ser maior que zero.")
+            return redirect('equipamentos:dashboard_estoque')
+
+        novos_itens = []
+        for i in range(quantidade):
+            nome_final = f"{prefixo_nome} - {i+1}" 
+            
+            novos_itens.append(EquipamentoAuxiliar(
+                nome=nome_final,
+                tipo_equipamento_aux=tipo,
+                status='DISPONIVEL',
+                funcionario=None,
+                dispositivo=None
+            ))
+        
+        EquipamentoAuxiliar.objects.bulk_create(novos_itens)
+        
+        messages.success(request, f"{quantidade} novos itens do tipo '{tipo}' adicionados ao estoque!")
+        return redirect('equipamentos:dashboard_estoque')
+
+    return redirect('equipamentos:dashboard_estoque')

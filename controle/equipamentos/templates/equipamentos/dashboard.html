@@ -1,0 +1,113 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Estoque de Equipamentos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📦 Controle de Estoque (Auxiliares)</h2>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalEntrada">
+            <i class="bi bi-plus-lg"></i> Nova Entrada (Lote)
+        </button>
+    </div>
+
+    <!-- {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %} -->
+
+    <div class="row g-4">
+        {% for item in metricas %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-primary">{{ item.tipo_equipamento_aux }}</h5>
+                    <span class="badge bg-secondary rounded-pill">{{ item.total }} Total</span>
+                </div>
+                
+                <div class="card-body">
+                    
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-success fw-bold">Disponíveis: {{ item.disponiveis }}</small>
+                        <small class="text-primary fw-bold">Em Uso: {{ item.ativos }}</small>
+                    </div>
+
+                    <div class="progress mb-3" style="height: 10px;">
+                        {% if item.total %}
+                            {% widthratio item.disponiveis item.total 100 as pct_livre %}
+                            {% widthratio item.ativos item.total 100 as pct_ativo %}
+                            {% widthratio item.manutencao item.total 100 as pct_manut %}
+                        {% else %}
+                            {% widthratio 0 1 100 as pct_livre %}
+                            {% widthratio 0 1 100 as pct_ativo %}
+                            {% widthratio 0 1 100 as pct_manut %}
+                        {% endif %}
+                        
+                        <div class="progress-bar bg-success" style="width: {{ pct_livre }}%" title="Disponível"></div>
+                        <div class="progress-bar bg-primary" style="width: {{ pct_ativo }}%" title="Em uso"></div>
+                        <div class="progress-bar bg-warning text-dark" style="width: {{ pct_manut }}%" title="Manutenção"></div>
+                    </div>
+
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span>Manutenção:</span>
+                            <span class="badge bg-warning text-dark">{{ item.manutencao }}</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card-footer bg-light text-end">
+                    <small class="text-muted">Gerenciar {{ item.tipo_equipamento_aux }}</small>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted fs-5">Nenhum equipamento cadastrado no estoque.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<div class="modal fade" id="modalEntrada" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="{% url 'equipamentos:entrada_estoque' %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Entrada de Material</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Equipamento</label>
+                        <select name="tipo_equipamento_aux" class="form-select" required>
+                            {% for val, label in tipos_aux %}
+                                <option value="{{ val }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantidade</label>
+                        <input type="number" name="quantidade" class="form-control" min="1" value="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nome Base / Modelo</label>
+                        <input type="text" name="prefixo_nome" class="form-control" placeholder="Ex: Mouse Logitech" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
