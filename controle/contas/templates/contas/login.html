@@ -20,9 +20,8 @@
             transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
         }
         
-        /* 3. CLASSE PARA AJUSTAR O TAMANHO DA LOGO (OPCIONAL) */
         .logo-login {
-            max-height: 80px; /* Ajuste a altura conforme necessário */
+            max-height: 80px;
             width: auto;
             margin-bottom: 100px;
         }
@@ -35,8 +34,6 @@
             <div class="card p-4 shadow-sm">
                 
                 <img src="{% static 'logo.png' %}" alt="Logo Operah" class="logo-login d-block mx-auto mb-3">
-
-                <!-- <h3 class="card-title text-center mb-4">Sistema OPERAH</h3> -->
 
                 {% if form.errors %}
                     <div class="alert alert-warning text-center">

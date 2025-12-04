@@ -47,11 +47,17 @@ class EquipamentoAuxiliar(models.Model):
     # -----------------------
 
     def save(self, *args, **kwargs):
-        # Verifica se tem dono (Funcionario ou Dispositivo vinculado)
-        if self.funcionario or self.dispositivo:
+        
+        if self.status == 'MANUTENCAO':
+            
+            self.funcionario = None
+            self.dispositivo = None
+        
+        elif self.funcionario or self.dispositivo:
             self.status = "ATIVO"
         else:
             self.status = "DISPONIVEL"
+            
         super().save(*args, **kwargs)
 
     def vincular(self, funcionario=None, dispositivo=None):

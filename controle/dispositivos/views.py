@@ -2,20 +2,26 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponseBadRequest
+from django.db.models import Count, Q  # Importante para o Dashboard
+
+# Importa os models locais
 from .models import Dispositivo, STATUS_CHOICES, TIPO_DISPOSITIVO_CHOICES
+
+# Importa o model de Funcionários
 from funcionarios.models import Funcionario
 
 @login_required
 def listar_dispositivos(request):
+    # Busca todos os dispositivos ordenados pelo código
     dispositivos = Dispositivo.objects.all().order_by('codigo')
     
-    # CORREÇÃO: Carregar apenas funcionários ATIVOS para o modal de cadastro
-    funcionarios_ativos = Funcionario.objects.filter(status='ATIVO').order_by('nome')
+    # Busca apenas funcionários ATIVOS para preencher o <select>
+    funcionarios = Funcionario.objects.filter(status='ATIVO').order_by('nome')
 
     return render(request, 'dispositivos/listar_dispositivos.html', {
         'dispositivos': dispositivos,
         'tipos': TIPO_DISPOSITIVO_CHOICES,
-        'funcionarios': funcionarios_ativos, # Usamos essa lista filtrada
+        'funcionarios': funcionarios,
         'status': STATUS_CHOICES,
     })
 
@@ -36,23 +42,24 @@ def criar_dispositivo(request):
         messages.error(request, "Já existe um dispositivo com esse código.")
         return redirect('dispositivos:listar_dispositivos')
 
-    # Status inicial
+    # Define status inicial: Se tem dono, ATIVO, senão DISPONIVEL
     status = "ATIVO" if funcionario_id else "DISPONIVEL"
 
     Dispositivo.objects.create(
         codigo=codigo,
-        tipo_dispositivo=tipo, # Ajustado para o nome do campo no seu model
+        tipo_dispositivo=tipo,
         funcionario_id=funcionario_id,
         status=status
     )
 
-    messages.success(request, "Dispositivo cadastrado.")
+    messages.success(request, "Dispositivo cadastrado com sucesso.")
     return redirect('dispositivos:listar_dispositivos')
 
 @login_required
 def editar_dispositivo(request, id):
     dispositivo = get_object_or_404(Dispositivo, id=id)
 
+    # SE FOR GET: Retorna os dados para preencher o Modal (AJAX)
     if request.method == "GET":
         return JsonResponse({
             "id": dispositivo.id,
@@ -62,19 +69,24 @@ def editar_dispositivo(request, id):
             "status": dispositivo.status,
         })
 
+    # SE FOR POST: Salva as alterações
     if request.method == "POST":
         novo_codigo = (request.POST.get("codigo") or "").strip()
         novo_funcionario_id = request.POST.get("funcionario") or None
         novo_status = request.POST.get("status") or dispositivo.status
 
-        # Validação de Código Único (exceto o atual)
+        if not novo_codigo:
+            messages.error(request, "Código é obrigatório.")
+            return redirect('dispositivos:listar_dispositivos')
+
+        # Verifica duplicidade de código (excluindo o próprio dispositivo)
         if Dispositivo.objects.exclude(id=dispositivo.id).filter(codigo__iexact=novo_codigo).exists():
             messages.error(request, "Já existe outro dispositivo com esse código.")
             return redirect('dispositivos:listar_dispositivos')
 
         dispositivo.codigo = novo_codigo
 
-        # Lógica de Manutenção vs Vínculo
+        # Lógica de Status e Manutenção
         if novo_status == "MANUTENCAO" and dispositivo.status != "MANUTENCAO":
             dispositivo.enviar_manutencao()
         
@@ -84,27 +96,54 @@ def editar_dispositivo(request, id):
             if novo_funcionario_id:
                 dispositivo.funcionario_id = novo_funcionario_id
                 dispositivo.status = "ATIVO"
+            
         else:
-            # Fluxo normal
+            # Edição normal
             dispositivo.funcionario_id = novo_funcionario_id
-            dispositivo.status = "ATIVO" if novo_funcionario_id else "DISPONIVEL"
+            # Se mudou manualmente o status, respeita. Se não, calcula baseado no dono.
+            if novo_status:
+                dispositivo.status = novo_status
+            else:
+                dispositivo.status = "ATIVO" if novo_funcionario_id else "DISPONIVEL"
 
         dispositivo.save()
-        messages.success(request, "Dispositivo atualizado.")
+
+        messages.success(request, "Dispositivo atualizado com sucesso.")
         return redirect('dispositivos:listar_dispositivos')
-        
-    return HttpResponseBadRequest("Método inválido")
+
+    return HttpResponseBadRequest("Método não suportado.")
 
 @login_required
 def deletar_dispositivo(request, id):
     dispositivo = get_object_or_404(Dispositivo, id=id)
     dispositivo.delete()
-    messages.success(request, "Dispositivo excluído.")
+    messages.success(request, f"Dispositivo {dispositivo.codigo} excluído permanentemente.")
     return redirect('dispositivos:listar_dispositivos')
 
 @login_required
 def desvincular_dispositivo(request, id):
     dispositivo = get_object_or_404(Dispositivo, id=id)
     dispositivo.desvincular()
-    messages.info(request, "Dispositivo desvinculado.")
+    messages.info(request, f"Dispositivo {dispositivo.codigo} desvinculado e devolvido ao estoque.")
     return redirect('dispositivos:listar_dispositivos')
+
+# --- NOVA VIEW DO DASHBOARD (Agora com indentação correta) ---
+@login_required
+def dashboard_dispositivos(request):
+    # 1. Totais Gerais (Os 3 Cards)
+    dados_gerais = Dispositivo.objects.aggregate(
+        total=Count('id'),
+        ativos=Count('id', filter=Q(status='ATIVO')),
+        disponiveis=Count('id', filter=Q(status='DISPONIVEL')),
+        manutencao=Count('id', filter=Q(status='MANUTENCAO'))
+    )
+
+    # 2. Distribuição por Tipo
+    por_tipo = Dispositivo.objects.values('tipo_dispositivo').annotate(
+        qtd=Count('id')
+    ).order_by('-qtd')
+
+    return render(request, 'dispositivos/dashboard.html', {
+        'dados': dados_gerais,
+        'por_tipo': por_tipo,
+    })

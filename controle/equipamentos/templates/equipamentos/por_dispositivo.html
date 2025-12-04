@@ -1,67 +1,156 @@
-<div class="modal-header">
-    <h5 class="modal-title">
-        Gerenciar Equipamentos 
-        <br>
-        <small class="text-muted fs-6">{{ dispositivo.codigo }} - {{ dispositivo.get_tipo_dispositivo_display }}</small>
-    </h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<style>
+    /* Estilos Locais para o Modal (baseado na identidade Tech) */
+    .modal-header-tech {
+        background-color: #422c76; /* Lilás */
+        color: white;
+        border-bottom: none;
+    }
+    
+    .search-box-tech {
+        background-color: #faf9f5; /* Off-white */
+        border: 1px dashed #422c76; /* Borda tracejada Lilás suave */
+        border-radius: 12px;
+        padding: 15px;
+    }
+
+    .btn-action-magenta {
+        background-color: #ff2f69; /* Magenta */
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .btn-action-magenta:hover {
+        background-color: #d61c50;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(255, 47, 105, 0.3);
+    }
+    .btn-action-magenta:disabled {
+        background-color: #e9ecef;
+        color: #adb5bd;
+        box-shadow: none;
+        transform: none;
+    }
+
+    /* Tabela Tech Minimalista */
+    .table-tech-modal thead th {
+        color: #414042; /* Grafite */
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        border-bottom: 2px solid #f0f2f5;
+    }
+    .table-tech-modal tbody td {
+        color: #414042;
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    /* Badges Customizadas */
+    .badge-status-use {
+        background-color: rgba(66, 44, 118, 0.1); /* Fundo Lilás claro */
+        color: #422c76; /* Texto Lilás */
+        border: 1px solid rgba(66, 44, 118, 0.2);
+    }
+    
+    .btn-return-icon {
+        background-color: #fff3cd;
+        color: #856404;
+        border: none;
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    .btn-return-icon:hover {
+        background-color: #ffc107;
+        color: #000;
+    }
+
+    /* Select2 Ajustes */
+    .select2-container--default .select2-selection--single {
+        border-radius: 8px;
+        height: 38px;
+        border: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+    }
+    .select2-container--open { z-index: 9999999 !important; }
+</style>
+
+<div class="modal-header modal-header-tech">
+    <div>
+        <h5 class="modal-title fw-bold">
+            <i class="bi bi-hdd-network me-2"></i>Gerenciar Equipamentos
+        </h5>
+        <p class="mb-0 small opacity-75">
+            {{ dispositivo.codigo }} <span class="mx-1">•</span> {{ dispositivo.get_tipo_dispositivo_display }}
+        </p>
+    </div>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 
-<div class="modal-body">
+<div class="modal-body p-4">
     
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} py-2 fade show">{{ message }}</div>
+            <div class="alert alert-{{ message.tags }} py-2 fade show rounded-3 border-0 shadow-sm mb-3">
+                <i class="bi bi-info-circle me-1"></i> {{ message }}
+            </div>
         {% endfor %}
     {% endif %}
 
-    <div class="card mb-4 border-success">
-        <div class="card-header bg-success text-white py-1">
-            <small class="fw-bold"><i class="bi bi-search"></i> Buscar no Estoque (Disponíveis)</small>
+    <div class="search-box-tech mb-4">
+        <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-link-45deg text-brand-lilac me-2 fs-5"></i>
+            <small class="fw-bold" style="color: #422c76;">Vincular Novo Item</small>
         </div>
-        <div class="card-body py-3 bg-light">
-            
-            <form method="POST" action="{% url 'equipamentos:equipamentos_dispositivo' dispositivo.id %}">
-                {% csrf_token %}
-                <div class="row g-2 align-items-end">
-                    
-                    <div class="col-md-9">
-                        <label class="form-label small fw-bold text-muted">Selecione o item:</label>
-                        
-                        <select name="item_id" class="form-select form-select-sm select2-estoque" required>
-                            <option value="">Digite para buscar...</option>
-                            {% for item in estoque %}
-                                <option value="{{ item.id }}">
-                                    [{{ item.get_tipo_equipamento_aux_display }}] {{ item.nome }}
-                                </option>
-                            {% empty %}
-                                <option value="" disabled>-- Estoque vazio ou indisponível --</option>
-                            {% endfor %}
-                        </select>
-
-                    </div>
-                    
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-sm btn-success w-100" {% if not estoque %}disabled{% endif %}>
-                            <i class="bi bi-link"></i> Vincular
-                        </button>
-                    </div>
+        
+        <form method="POST" action="{% url 'equipamentos:equipamentos_dispositivo' dispositivo.id %}">
+            {% csrf_token %}
+            <div class="row g-2 align-items-center">
+                <div class="col-md-9">
+                    <select name="item_id" class="form-select select2-estoque" required>
+                        <option value="">Buscar no estoque disponível...</option>
+                        {% for item in estoque %}
+                            <option value="{{ item.id }}">
+                                [{{ item.get_tipo_equipamento_aux_display }}] {{ item.nome }}
+                            </option>
+                        {% empty %}
+                            <option value="" disabled>-- Estoque vazio ou indisponível --</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 
-                {% if not estoque %}
-                    <div class="mt-2 text-danger small">
-                        <i class="bi bi-exclamation-circle"></i> Não há itens "Disponíveis" no estoque. Vá em <b>Estoque</b> e dê entrada.
-                    </div>
-                {% endif %}
-            </form>
-        </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-action-magenta w-100 btn-sm py-2" {% if not estoque %}disabled{% endif %}>
+                        <i class="bi bi-plus-lg"></i> Vincular
+                    </button>
+                </div>
+            </div>
+            
+            {% if not estoque %}
+                <div class="mt-2 text-danger small bg-white p-2 rounded border border-danger border-opacity-25">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Não há itens <b>Livres</b> no estoque.
+                </div>
+            {% endif %}
+        </form>
     </div>
-    <h6 class="text-muted mb-2 border-bottom pb-2">Itens Vinculados:</h6>
+
+    <h6 class="fw-bold mb-3" style="color: #414042; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px;">
+        Itens Atualmente Vinculados
+    </h6>
+    
     <div class="table-responsive">
-        <table class="table table-hover align-middle table-sm">
-            <thead class="table-light">
+        <table class="table table-hover align-middle table-tech-modal mb-0">
+            <thead>
                 <tr>
-                    <th>Nome</th>
+                    <th>Nome / Modelo</th>
                     <th>Tipo</th>
                     <th>Status</th>
                     <th class="text-end">Ações</th>
@@ -70,28 +159,41 @@
             <tbody>
                 {% for item in equipamentos %}
                 <tr>
-                    <td><strong>{{ item.nome }}</strong></td>
-                    <td>{{ item.get_tipo_equipamento_aux_display }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; color: #422c76;">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <span class="fw-bold">{{ item.nome }}</span>
+                        </div>
+                    </td>
+                    <td><span class="text-muted small">{{ item.get_tipo_equipamento_aux_display }}</span></td>
                     <td>
                         {% if item.status == 'ATIVO' %}
-                            <span class="badge bg-primary">Em uso</span>
+                            <span class="badge rounded-pill badge-status-use">
+                                <i class="bi bi-check-circle-fill me-1"></i>Em uso
+                            </span>
                         {% else %}
-                            <span class="badge bg-secondary">{{ item.status }}</span>
+                            <span class="badge rounded-pill bg-secondary">{{ item.status }}</span>
                         {% endif %}
                     </td>
                     <td class="text-end">
                         <a href="{% url 'equipamentos:desvincular_equipamento' item.id %}" 
-                           class="btn btn-sm btn-outline-warning"
-                           title="Devolver ao Estoque"
+                           class="btn-return-icon"
+                           data-bs-toggle="tooltip"
+                           title="Devolver ao Estoque (Tornar Disponível)"
                            onclick="return confirm('Tem certeza? O item voltará a ficar DISPONÍVEL no estoque.');">
-                            <i class="bi bi-arrow-counterclockwise"></i> Devolver
+                            <i class="bi bi-arrow-counterclockwise"></i>
                         </a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center py-4 text-muted">
-                        Nenhum equipamento auxiliar vinculado.
+                    <td colspan="4" class="text-center py-5">
+                        <div class="opacity-50">
+                            <i class="bi bi-slash-circle display-6 d-block mb-2"></i>
+                            <span class="small">Nenhum equipamento auxiliar vinculado a este dispositivo.</span>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -100,15 +202,22 @@
     </div>
 </div>
 
-<div class="modal-footer bg-light">
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+<div class="modal-footer bg-light border-0">
+    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Fechar</button>
 </div>
 
 <script>
+    // Inicializa Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Inicializa Select2
     $('.select2-estoque').select2({
-        placeholder: "Digite o nome do equipamento...",
+        placeholder: "Buscar no estoque disponível...",
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#modalEquipamentos') // Garante que a lista apareça DENTRO deste modal
+        dropdownParent: $('#modalEquipamentos') // Garante que a lista apareça sobre o modal
     });
 </script>

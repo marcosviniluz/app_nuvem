@@ -1,0 +1,83 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Gerenciar {{ nome_tipo }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Gerenciar: <span class="text-primary">{{ nome_tipo }}</span></h3>
+        <a href="{% url 'equipamentos:dashboard_estoque' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome / Identificação</th>
+                            <th>Status Atual</th>
+                            <th>Vinculado a</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                        <tr>
+                            <td class="fw-bold">{{ item.nome }}</td>
+                            <td>
+                                {% if item.status == 'ATIVO' %}
+                                    <span class="badge bg-success">Em Uso</span>
+                                {% elif item.status == 'MANUTENCAO' %}
+                                    <span class="badge bg-warning text-dark">Manutenção</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Disponível</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.funcionario %}
+                                    <i class="bi bi-person"></i> {{ item.funcionario.nome }}
+                                {% elif item.dispositivo %}
+                                    <i class="bi bi-laptop"></i> {{ item.dispositivo.codigo }}
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if item.status == 'MANUTENCAO' %}
+                                    <a href="{% url 'equipamentos:acao_manutencao' item.id %}" 
+                                       class="btn btn-sm btn-outline-success"
+                                       title="Concluir Manutenção (Devolver ao Estoque)">
+                                        <i class="bi bi-check-lg"></i> Retornar
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'equipamentos:acao_manutencao' item.id %}" 
+                                       class="btn btn-sm btn-outline-warning"
+                                       title="Enviar para Manutenção"
+                                       onclick="return confirm('Enviar este item para manutenção? Se estiver com alguém, será desvinculado.');">
+                                        <i class="bi bi-tools"></i> Manutenção
+                                    </a>
+                                {% endif %}
+
+                                <a href="{% url 'equipamentos:deletar_equipamento' item.id %}" 
+                                   class="btn btn-sm btn-outline-danger ms-1"
+                                   onclick="return confirm('Excluir permanentemente?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">Nenhum item deste tipo encontrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,85 +4,284 @@
 {% block title %}Funcionários{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+
+<style>
+    :root {
+        --brand-primary: #1e1e2f; 
+        --brand-accent: #d63384;  
+        --brand-light: #f8f9fa;
+    }
+
+    /* Estilos Gerais */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-title {
+        font-weight: 700;
+        color: var(--brand-primary);
+        margin: 0;
+    }
+
+    .btn-tech-primary {
+        background: linear-gradient(135deg, var(--brand-primary), #3b3b58);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+        box-shadow: 0 4px 10px rgba(30, 30, 47, 0.2);
+        transition: transform 0.2s;
+    }
+
+    .btn-tech-primary:hover {
+        transform: translateY(-2px);
+        color: white;
+        box-shadow: 0 6px 15px rgba(30, 30, 47, 0.3);
+    }
+
+    /* Inputs e Filtros */
+    .search-container {
+        position: relative;
+        margin-bottom: 0;
+    }
+
+    .search-input {
+        border-radius: 50px;
+        border: 1px solid #eef0f5;
+        background: white;
+        padding: 1rem 1rem 1rem 3rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+        width: 100%;
+        transition: all 0.3s;
+    }
+
+    .search-input:focus {
+        border-color: var(--brand-accent);
+        box-shadow: 0 5px 20px rgba(214, 51, 132, 0.15);
+        outline: none;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        z-index: 10;
+    }
+
+    /* Tabela Tech */
+    .tech-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+        border: none;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .table-tech thead th {
+        background-color: white;
+        color: #8898aa;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #eef0f5;
+        padding: 1.2rem 1rem;
+    }
+
+    .table-tech tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f5f7fb;
+        color: #525f7f;
+        font-size: 0.9rem;
+    }
+
+    .table-tech tbody tr:hover {
+        background-color: #fcfcfd;
+    }
+
+    /* Avatar e Badges */
+    .avatar-circle {
+        width: 35px;
+        height: 35px;
+        background-color: #eef0f5;
+        color: var(--brand-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin-right: 12px;
+        font-size: 0.9rem;
+    }
+
+    .badge-unit {
+        background-color: #e3e8f5;
+        color: #4a5073;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+    }
+
+    /* Tabs Customizadas */
+    .nav-tabs {
+        border-bottom: 2px solid #eef0f5;
+        margin-bottom: 1.5rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: #8898aa;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: var(--brand-primary);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--brand-primary);
+        background: transparent;
+        border-bottom: 2px solid var(--brand-primary);
+    }
+
+    .nav-tabs .nav-link.text-danger.active {
+        color: #dc3545;
+        border-bottom-color: #dc3545;
+    }
+
+    /* Botões de Ação */
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: none;
+        transition: all 0.2s;
+        margin-left: 6px;
+    }
+
+    .btn-action-history { background-color: #e0f2fe; color: #0ea5e9; }
+    .btn-action-history:hover { background-color: #0ea5e9; color: white; }
+
+    .btn-action-edit { background-color: #fdf3e8; color: #f59e0b; }
+    .btn-action-edit:hover { background-color: #f59e0b; color: white; }
+
+    .btn-action-delete { background-color: #fee2e2; color: #ef4444; }
+    .btn-action-delete:hover { background-color: #ef4444; color: white; }
     
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Gerenciamento de Funcionários</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCriar">
-            <i class="bi bi-person-plus"></i> Novo Funcionário
+    .btn-action-restore { background-color: #dcfce7; color: #22c55e; }
+    .btn-action-restore:hover { background-color: #22c55e; color: white; }
+
+</style>
+
+<div class="container-fluid px-0">
+    
+    <div class="page-header">
+        <h2 class="page-title">Gerenciamento de Funcionários</h2>
+        <button class="btn btn-tech-primary" data-bs-toggle="modal" data-bs-target="#modalCriar">
+            <i class="bi bi-person-plus me-1"></i> Novo Funcionário
         </button>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-8">
-                    <input type="text" id="busca" class="form-control" placeholder="🔍 Buscar por nome...">
-                </div>
-                <div class="col-md-4">
-                    <select id="filtroUnidade" class="form-select">
-                        <option value="">Todas as Unidades</option>
-                        {% for u in unidades %}
-                            <option value="{{ u.id }}">{{ u.nome }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="search-container">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" id="busca" class="search-input" placeholder="Buscar funcionário por nome...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="position-relative">
+                <i class="bi bi-building search-icon"></i>
+                <select id="filtroUnidade" class="search-input form-select" style="cursor: pointer;">
+                    <option value="">Todas as Unidades</option>
+                    {% for u in unidades %}
+                        <option value="{{ u.id }}">{{ u.nome }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
     </div>
 
-    <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="ativos-tab" data-bs-toggle="tab" data-bs-target="#tab-ativos" type="button">Ativos</button>
+            <button class="nav-link active" id="ativos-tab" data-bs-toggle="tab" data-bs-target="#tab-ativos" type="button">
+                <i class="bi bi-person-check me-2"></i>Ativos
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link text-danger" id="demitidos-tab" data-bs-toggle="tab" data-bs-target="#tab-demitidos" type="button">Histórico / Demitidos</button>
+            <button class="nav-link text-danger" id="demitidos-tab" data-bs-toggle="tab" data-bs-target="#tab-demitidos" type="button">
+                <i class="bi bi-person-x me-2"></i>Histórico / Demitidos
+            </button>
         </li>
     </ul>
 
     <div class="tab-content" id="myTabContent">
         
         <div class="tab-pane fade show active" id="tab-ativos">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
+            <div class="tech-card table-responsive">
+                <table class="table table-tech mb-0">
+                    <thead>
                         <tr>
                             <th>Nome</th>
                             <th>Email</th>
                             <th>Unidade</th>
-                            <th class="text-end">Ações</th>
+                            <th class="text-end pe-4">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="listaAtivos">
                     {% for f in ativos %}
                         <tr data-nome="{{ f.nome|lower }}" data-unidade="{{ f.unidade_trabalho.id }}">
-                            <td><strong>{{ f.nome }}</strong></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle">
+                                        {{ f.nome|slice:":1" }}
+                                    </div>
+                                    <span class="fw-bold text-dark">{{ f.nome }}</span>
+                                </div>
+                            </td>
                             <td>{{ f.email }}</td>
                             <td>
                                 {% if f.unidade_trabalho %}
-                                    <span class="badge bg-secondary">{{ f.unidade_trabalho.nome }}</span>
+                                    <span class="badge-unit"><i class="bi bi-building me-1"></i> {{ f.unidade_trabalho.nome }}</span>
                                 {% else %}
-                                    <span class="text-muted">—</span>
+                                    <span class="text-muted small">—</span>
                                 {% endif %}
                             </td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-info btnHistorico" data-id="{{ f.id }}">
-                                    Histórico
+                            <td class="text-end pe-4">
+                                <button class="btn-action btn-action-history btnHistorico" data-id="{{ f.id }}" data-bs-toggle="tooltip" title="Ver Histórico">
+                                    <i class="bi bi-clock-history"></i>
                                 </button>
                                 
-                                <button class="btn btn-sm btn-warning btnEditar" data-id="{{ f.id }}">
-                                    Editar
+                                <button class="btn-action btn-action-edit btnEditar" data-id="{{ f.id }}" data-bs-toggle="tooltip" title="Editar">
+                                    <i class="bi bi-pencil-fill" style="font-size: 0.8rem;"></i>
                                 </button>
 
-                                <button class="btn btn-sm btn-outline-danger btnDemitir" 
+                                <button class="btn-action btn-action-delete btnDemitir" 
                                         data-id="{{ f.id }}" 
-                                        data-nome="{{ f.nome }}">
-                                    Demitir
+                                        data-nome="{{ f.nome }}"
+                                        data-bs-toggle="tooltip" title="Demitir">
+                                    <i class="bi bi-person-x-fill"></i>
                                 </button>
                             </td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="4" class="text-center">Nenhum funcionário ativo.</td></tr>
+                        <tr><td colspan="4" class="text-center py-5 text-muted">Nenhum funcionário ativo encontrado.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -90,62 +289,71 @@
         </div>
 
         <div class="tab-pane fade" id="tab-demitidos">
-            <div class="table-responsive">
-                <table class="table table-striped align-middle text-muted">
+            <div class="tech-card table-responsive">
+                <table class="table table-tech mb-0 text-muted">
                     <thead>
                         <tr>
                             <th>Nome</th>
                             <th>Email</th>
                             <th>Data Demissão</th>
-                            <th class="text-end">Ações</th>
+                            <th class="text-end pe-4">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="listaInativos">
                     {% for f in demitidos %}
                         <tr data-nome="{{ f.nome|lower }}" data-unidade="{{ f.unidade_trabalho.id }}">
-                            <td>{{ f.nome }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-light text-muted">
+                                        {{ f.nome|slice:":1" }}
+                                    </div>
+                                    <span>{{ f.nome }}</span>
+                                </div>
+                            </td>
                             <td>{{ f.email }}</td>
-                            <td>{{ f.data_demissao|date:"d/m/Y" }}</td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-secondary btnHistorico" data-id="{{ f.id }}">Histórico</button>
+                            <td><i class="bi bi-calendar-x me-1"></i> {{ f.data_demissao|date:"d/m/Y" }}</td>
+                            <td class="text-end pe-4">
+                                <button class="btn-action btn-action-history btnHistorico" data-id="{{ f.id }}" data-bs-toggle="tooltip" title="Ver Histórico">
+                                    <i class="bi bi-clock-history"></i>
+                                </button>
                                 <a href="{% url 'funcionarios:reativar_funcionario' f.id %}" 
-                                   class="btn btn-sm btn-outline-success"
-                                   onclick="return confirm('Deseja recontratar este funcionário?')">
-                                    Recontratar
+                                   class="btn-action btn-action-restore"
+                                   onclick="return confirm('Deseja recontratar este funcionário?')"
+                                   data-bs-toggle="tooltip" title="Recontratar">
+                                    <i class="bi bi-person-check-fill"></i>
                                 </a>
                             </td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="4" class="text-center">Nenhum registro histórico.</td></tr>
+                        <tr><td colspan="4" class="text-center py-5 text-muted">Nenhum registro histórico encontrado.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-
 </div>
 
 <div class="modal fade" id="modalCriar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <form method="POST" action="{% url 'funcionarios:criar_funcionario' %}">
-            {% csrf_token %}
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Novo Funcionário</h5>
+        <div class="modal-content border-0 shadow">
+            <form method="POST" action="{% url 'funcionarios:criar_funcionario' %}">
+                {% csrf_token %}
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark">Novo Funcionário</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Nome</label>
+                        <label class="form-label text-muted small fw-bold">Nome Completo</label>
                         <input type="text" name="nome" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
+                        <label class="form-label text-muted small fw-bold">Email Corporativo</label>
                         <input type="email" name="email" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Unidade</label>
+                        <label class="form-label text-muted small fw-bold">Unidade</label>
                         <select name="unidade_trabalho" class="form-select">
                             <option value="">Selecione...</option>
                             {% for u in unidades %}
@@ -154,35 +362,35 @@
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-tech-primary px-4">Salvar</button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
 <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <form id="formEditar" method="POST">
-            {% csrf_token %}
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Editar Funcionário</h5>
+        <div class="modal-content border-0 shadow">
+            <form id="formEditar" method="POST">
+                {% csrf_token %}
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark">Editar Funcionário</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Nome</label>
+                        <label class="form-label text-muted small fw-bold">Nome</label>
                         <input type="text" id="editNome" name="nome" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
+                        <label class="form-label text-muted small fw-bold">Email</label>
                         <input type="email" id="editEmail" name="email" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Unidade</label>
+                        <label class="form-label text-muted small fw-bold">Unidade</label>
                         <select id="editUnidade" name="unidade_trabalho" class="form-select">
                             <option value="">Selecione...</option>
                             {% for u in unidades %}
@@ -191,26 +399,26 @@
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-tech-primary px-4">Salvar Alterações</button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
 <div class="modal fade" id="modalHistorico" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Histórico Completo</h5>
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark">Histórico Completo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="conteudoHistorico">
-                <div class="text-center py-3">
+                <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-2">Carregando histórico...</p>
+                    <p class="mt-3 text-muted">Carregando histórico...</p>
                 </div>
             </div>
         </div>
@@ -219,43 +427,61 @@
 
 <div class="modal fade" id="modalDemitir" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <form id="formDemitir" method="POST">
-            {% csrf_token %}
-            <div class="modal-content border-danger">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Confirmar Demissão</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-content border-0 shadow">
+            <form id="formDemitir" method="POST">
+                {% csrf_token %}
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger">Confirmar Demissão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Tem certeza que deseja demitir <strong id="nomeDemitir"></strong>?</p>
-                    <div class="alert alert-warning">
+                    <p class="text-dark">Tem certeza que deseja demitir <strong id="nomeDemitir" class="text-danger"></strong>?</p>
+                    <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning-emphasis">
                         <small>
-                            <i class="bi bi-exclamation-triangle"></i> 
-                            Isso irá <strong>desvincular</strong> todos os dispositivos (Notebooks, Impressoras) 
-                            e equipamentos auxiliares desta pessoa e devolvê-los ao estoque.
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> 
+                            Isso irá <strong>desvincular</strong> todos os dispositivos e equipamentos desta pessoa e devolvê-los ao estoque.
                         </small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Confirmar Demissão</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4">Confirmar Demissão</button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     
-    // --- 1. BUSCA POR NOME (Aplica para as duas tabelas) ---
+    // Tooltips do Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // --- 1. BUSCA POR NOME ---
     const inputBusca = document.getElementById("busca");
-    inputBusca.addEventListener("input", function() {
+    inputBusca.addEventListener("keyup", function() {
         const termo = this.value.toLowerCase();
+        // Filtra nas duas tabelas (Ativos e Inativos)
         document.querySelectorAll("tbody tr").forEach(row => {
             const nome = row.dataset.nome;
+            // Se tiver classe de "Nenhum registro" ignora
             if(nome) {
-                row.style.display = nome.includes(termo) ? "" : "none";
+                // Checa também o filtro de unidade atual
+                const unidadeSelecionada = document.getElementById("filtroUnidade").value;
+                const rowUnidade = row.dataset.unidade;
+                
+                const matchNome = nome.includes(termo);
+                const matchUnidade = (unidadeSelecionada === "" || rowUnidade === unidadeSelecionada);
+
+                if(matchNome && matchUnidade) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
             }
         });
     });
@@ -263,30 +489,18 @@ document.addEventListener("DOMContentLoaded", function() {
     // --- 2. FILTRO POR UNIDADE ---
     const selectUnidade = document.getElementById("filtroUnidade");
     selectUnidade.addEventListener("change", function() {
-        const unidadeId = this.value;
-        document.querySelectorAll("tbody tr").forEach(row => {
-            const rowUnidade = row.dataset.unidade;
-            // Se unidadeId for vazio (todos) ou bater com a linha
-            if(unidadeId === "" || rowUnidade === unidadeId) {
-                // Só mostra se também passar no filtro de busca (opcional, aqui resetei)
-                row.style.display = ""; 
-            } else {
-                row.style.display = "none";
-            }
-        });
-        // Disparar o evento de busca para garantir que ambos filtros funcionem juntos
-        inputBusca.dispatchEvent(new Event('input'));
+        // Dispara o evento de busca para reaproveitar a lógica combinada
+        inputBusca.dispatchEvent(new Event('keyup'));
     });
 
-    // --- 3. ABRIR MODAL EDITAR (AJAX) ---
-    // Usamos 'delegate' event (document.body) caso adicione linhas dinamicamente no futuro
+    // --- 3. MODAL EDITAR ---
     document.body.addEventListener('click', function(e) {
-        if (e.target.classList.contains('btnEditar')) {
-            const btn = e.target;
+        // Procura o botão clicado ou o pai (caso clique no ícone)
+        const btn = e.target.closest('.btnEditar');
+        if (btn) {
             const id = btn.dataset.id;
             const modal = new bootstrap.Modal(document.getElementById('modalEditar'));
             
-            // Busca dados
             fetch(`/funcionarios/api/get/${id}/`)
                 .then(r => r.json())
                 .then(data => {
@@ -301,10 +515,10 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // --- 4. ABRIR MODAL DEMITIR ---
+    // --- 4. MODAL DEMITIR ---
     document.body.addEventListener('click', function(e) {
-        if (e.target.classList.contains('btnDemitir')) {
-            const btn = e.target;
+        const btn = e.target.closest('.btnDemitir');
+        if (btn) {
             const id = btn.dataset.id;
             const nome = btn.dataset.nome;
             
@@ -316,26 +530,24 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // --- 5. ABRIR MODAL HISTÓRICO (AJAX HTML) ---
+    // --- 5. MODAL HISTÓRICO ---
     document.body.addEventListener('click', function(e) {
-        if (e.target.classList.contains('btnHistorico')) {
-            const btn = e.target;
+        const btn = e.target.closest('.btnHistorico');
+        if (btn) {
             const id = btn.dataset.id;
             const modal = new bootstrap.Modal(document.getElementById('modalHistorico'));
             const container = document.getElementById("conteudoHistorico");
             
-            // Mostra loading
             modal.show();
-            container.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
+            container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Carregando histórico...</p></div>';
 
-            // Busca HTML parcial
             fetch(`/funcionarios/historico/${id}/`)
                 .then(r => r.text())
                 .then(html => {
                     container.innerHTML = html;
                 })
                 .catch(err => {
-                    container.innerHTML = '<p class="text-danger text-center">Erro ao carregar histórico.</p>';
+                    container.innerHTML = '<p class="text-danger text-center py-4">Erro ao carregar histórico.</p>';
                 });
         }
     });

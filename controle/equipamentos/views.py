@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Q
+
 from .models import EquipamentoAuxiliar, TIPO_EQUIPAMENTO_AUX_CHOICES
 from dispositivos.models import STATUS_CHOICES, Dispositivo
 from funcionarios.models import Funcionario
@@ -33,42 +34,40 @@ def equipamentos_funcionario(request, funcionario_id):
         "status_list": STATUS_CHOICES,
     })
 
-
 @login_required
 def equipamentos_dispositivo(request, dispositivo_id):
     dispositivo = get_object_or_404(Dispositivo, id=dispositivo_id)
 
+    # 1. PROCESSAMENTO DO VÍNCULO (POST)
     if request.method == "POST":
         item_id = request.POST.get("item_id")
         
         if item_id:
-
+            # Pega o item do estoque
             item = get_object_or_404(EquipamentoAuxiliar, id=item_id)
             
-            
+            # Vincula ao dispositivo
             item.dispositivo = dispositivo
-            
             if dispositivo.funcionario:
                 item.funcionario = dispositivo.funcionario
             
             item.save() 
-            
             messages.success(request, f"{item.nome} vinculado com sucesso!")
         else:
             messages.error(request, "Selecione um item do estoque.")
             
         return redirect('dispositivos:listar_dispositivos')
 
-    
+    # 2. PREPARAÇÃO DOS DADOS (GET)
     equipamentos_vinculados = EquipamentoAuxiliar.objects.filter(dispositivo_id=dispositivo_id)
     
-    # Itens disponíveis no estoque (para o select de adicionar)
-    estoque_disponivel = EquipamentoAuxiliar.objects.filter(status='DISPONIVEL').order_by('tipo_equipamento_aux', 'nome')
+    # IMPORTANTE: Busca itens DISPONÍVEIS para preencher o select do modal
+    estoque_disponivel = EquipamentoAuxiliar.objects.filter(status='DISPONIVEL').order_by('nome')
 
     return render(request, "equipamentos/por_dispositivo.html", {
         "dispositivo": dispositivo,
         "equipamentos": equipamentos_vinculados,
-        "estoque": estoque_disponivel, # Enviamos a lista de disponíveis
+        "estoque": estoque_disponivel, 
     })
 
 @login_required
@@ -115,12 +114,10 @@ def desvincular_equipamento(request, id):
         return redirect('equipamentos:equipamentos_funcionario', funcionario_id=redirect_func_id)
     return redirect('dispositivos:listar_dispositivos')
 
-# --- CORRIGIDO: Removido espaço extra na identação ---
+# --- DASHBOARD E ESTOQUE ---
+
 @login_required
 def dashboard_estoque(request):
-    """
-    Mostra os cards com totais de cada tipo de equipamento.
-    """
     metricas = EquipamentoAuxiliar.objects.values('tipo_equipamento_aux').annotate(
         total=Count('id'),
         disponiveis=Count('id', filter=Q(status='DISPONIVEL')),
@@ -135,9 +132,6 @@ def dashboard_estoque(request):
 
 @login_required
 def entrada_estoque(request):
-    """
-    Cria múltiplos itens de uma vez (Lote).
-    """
     if request.method == "POST":
         tipo = request.POST.get('tipo_equipamento_aux')
         quantidade = int(request.POST.get('quantidade') or 0)
@@ -165,3 +159,30 @@ def entrada_estoque(request):
         return redirect('equipamentos:dashboard_estoque')
 
     return redirect('equipamentos:dashboard_estoque')
+
+# --- MANUTENÇÃO ---
+
+@login_required
+def listar_equipamentos_por_tipo(request, tipo_codigo):
+    itens = EquipamentoAuxiliar.objects.filter(tipo_equipamento_aux=tipo_codigo).order_by('status', 'nome')
+    nome_tipo = dict(TIPO_EQUIPAMENTO_AUX_CHOICES).get(tipo_codigo, tipo_codigo)
+
+    return render(request, 'equipamentos/lista_por_tipo.html', {
+        'itens': itens,
+        'tipo_codigo': tipo_codigo,
+        'nome_tipo': nome_tipo
+    })
+
+@login_required
+def acao_manutencao_equipamento(request, id):
+    item = get_object_or_404(EquipamentoAuxiliar, id=id)
+    
+    if item.status == 'MANUTENCAO':
+        item.status = 'DISPONIVEL'
+        messages.success(request, f"{item.nome} retornou da manutenção.")
+    else:
+        item.status = 'MANUTENCAO'
+        messages.warning(request, f"{item.nome} enviado para manutenção.")
+    
+    item.save()
+    return redirect('equipamentos:listar_por_tipo', tipo_codigo=item.tipo_equipamento_aux)

@@ -9,6 +9,16 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <style>
+    :root {
+        --brand-primary: #1e1e2f; 
+        --brand-accent: #d63384;  
+        --brand-light: #f8f9fa;
+    }
+
+    body {
+        background-color: #f5f7fb;
+    }
+
     .select2-container--open { z-index: 9999999 !important; }
     .select2-container .select2-selection--single {
         height: 38px !important;
@@ -16,39 +26,177 @@
         display: flex;
         align-items: center;
     }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-title {
+        font-weight: 700;
+        color: var(--brand-primary);
+        margin: 0;
+    }
+
+    .btn-tech-primary {
+        background: linear-gradient(135deg, var(--brand-primary), #3b3b58);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+        box-shadow: 0 4px 10px rgba(30, 30, 47, 0.2);
+        transition: transform 0.2s;
+    }
+
+    .btn-tech-primary:hover {
+        transform: translateY(-2px);
+        color: white;
+        box-shadow: 0 6px 15px rgba(30, 30, 47, 0.3);
+    }
+
+    .search-container {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .search-input {
+        border-radius: 50px;
+        border: 1px solid #eef0f5;
+        background: white;
+        padding: 1rem 1rem 1rem 3rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+        width: 100%;
+        transition: all 0.3s;
+    }
+
+    .search-input:focus {
+        border-color: var(--brand-accent);
+        box-shadow: 0 5px 20px rgba(214, 51, 132, 0.15);
+        outline: none;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+    }
+
+    .tech-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+        border: none;
+        overflow: hidden;
+    }
+
+    .table-tech thead th {
+        background-color: white;
+        color: #8898aa;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #eef0f5;
+        padding: 1.2rem 1rem;
+    }
+
+    .table-tech tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f5f7fb;
+        color: #525f7f;
+        font-size: 0.9rem;
+    }
+
+    .table-tech tbody tr:hover {
+        background-color: #fcfcfd;
+    }
+
+    .codigo-badge {
+        font-family: monospace;
+        background: #eef0f5;
+        color: var(--brand-primary);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-ativo { background-color: #d1e7dd; color: #0f5132; }
+    .status-manutencao { background-color: #fff3cd; color: #664d03; }
+    .status-disponivel { background-color: #cfe2ff; color: #084298; }
+
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: none;
+        transition: all 0.2s;
+        margin-right: 5px;
+    }
+
+    .btn-action-edit { background-color: #fdf3e8; color: #f59e0b; }
+    .btn-action-edit:hover { background-color: #f59e0b; color: white; }
+
+    .btn-action-delete { background-color: #fee2e2; color: #ef4444; }
+    .btn-action-delete:hover { background-color: #ef4444; color: white; }
+
+    .btn-outline-tech {
+        border: 1px solid #e0e0e0;
+        color: #525f7f;
+        background: white;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+    .btn-outline-tech:hover {
+        border-color: var(--brand-accent);
+        color: var(--brand-accent);
+    }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Dispositivos</h2>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAddDispositivo">
-        <i class="bi bi-plus-lg"></i> Adicionar Dispositivo
+<div class="page-header">
+    <h2 class="page-title" style="color: #344767;">Gerenciamento de Dispositivos</h2>
+    <button class="btn btn-tech-primary" data-bs-toggle="modal" data-bs-target="#modalAddDispositivo">
+        <i class="bi bi-plus-lg me-1"></i> Novo Dispositivo
     </button>
 </div>
 
-<div class="card mb-3 bg-light border-0">
-    <div class="card-body py-2">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                    <input type="text" id="inputBuscaCodigo" class="form-control border-start-0" placeholder="🔍 Buscar por código do dispositivo...">
-                </div>
-            </div>
+<div class="row mb-4 g-3">
+    <div class="col-md-8">
+        <div class="search-container mb-0">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="inputBuscaCodigo" class="search-input" placeholder="Buscar por código, tipo ou funcionário...">
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="position-relative">
+            <i class="bi bi-funnel-fill search-icon" style="z-index: 10;"></i>
+            <select id="filtroStatus" class="search-input form-select" style="cursor: pointer;">
+                <option value="">Todos os Status</option>
+                {% for val, lab in status %}
+                    <option value="{{ val }}">{{ lab }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
 </div>
 
-<!-- {% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    {% endfor %}
-{% endif %} -->
-
-<div class="table-responsive">
-    <table class="table table-striped align-middle" id="tabelaDispositivos">
+<div class="tech-card table-responsive">
+    <table class="table table-tech mb-0" id="tabelaDispositivos">
         <thead>
             <tr>
                 <th>Código</th>
@@ -56,98 +204,107 @@
                 <th>Status</th> 
                 <th>Funcionário</th>
                 <th>Equipamentos Aux.</th>
-                <th width="180">Ações</th>
+                <th class="text-end pe-4">Ações</th>
             </tr>
         </thead>
         <tbody>
             {% for dispositivo in dispositivos %}
-            <tr>
-                <td class="codigo-item"><strong>{{ dispositivo.codigo }}</strong></td>
+            <tr data-status="{{ dispositivo.status }}">
+                <td><span class="codigo-badge">{{ dispositivo.codigo }}</span></td>
                 <td>{{ dispositivo.get_tipo_dispositivo_display }}</td>
                 <td>
                     {% if dispositivo.status == 'ATIVO' %}
-                        <span class="badge bg-success">Ativo</span>
+                        <span class="status-badge status-ativo">Ativo</span>
                     {% elif dispositivo.status == 'MANUTENCAO' %}
-                        <span class="badge bg-warning text-dark">Manutenção</span>
+                        <span class="status-badge status-manutencao">Manutenção</span>
                     {% else %}
-                        <span class="badge bg-secondary">Disponível</span>
+                        <span class="status-badge status-disponivel">Disponível</span>
                     {% endif %}
                 </td>
                 <td>
                     {% if dispositivo.funcionario %}
-                        {{ dispositivo.funcionario.nome }}
+                        <div class="d-flex align-items-center">
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center text-primary fw-bold me-2" style="width:30px; height:30px; font-size: 0.8rem;">
+                                {{ dispositivo.funcionario.nome|slice:":1" }}
+                            </div>
+                            {{ dispositivo.funcionario.nome }}
+                        </div>
                     {% else %}
-                        <span class="text-muted">—</span>
+                        <span class="text-muted" style="font-size:0.85rem; font-style:italic;">— Não atribuído</span>
                     {% endif %}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-info btnEquipamentos"
+                    <button class="btn btn-sm btn-outline-tech btnEquipamentos"
                             data-id="{{ dispositivo.id }}"
                             data-codigo="{{ dispositivo.codigo }}">
-                        Ver Itens
+                        <i class="bi bi-box-seam me-1"></i> Ver Itens
                     </button>
                 </td>
-                <td>
-                    <button class="btn btn-sm btn-warning btnEditar"
+                <td class="text-end pe-4">
+                    <button class="btn-action btn-action-edit btnEditar"
                         data-url="{% url 'dispositivos:editar_dispositivo' dispositivo.id %}"
                         data-id="{{ dispositivo.id }}"
                         data-codigo="{{ dispositivo.codigo }}"
                         data-tipo="{{ dispositivo.tipo_dispositivo }}"
                         data-funcionario="{% if dispositivo.funcionario %}{{ dispositivo.funcionario.id }}{% endif %}"
-                        data-status="{{ dispositivo.status }}">
-                        Editar
+                        data-status="{{ dispositivo.status }}"
+                        data-bs-toggle="tooltip" title="Editar">
+                        <i class="bi bi-pencil-fill" style="font-size: 0.8rem;"></i>
                     </button>
 
                     <a href="{% url 'dispositivos:deletar_dispositivo' dispositivo.id %}" 
-                       class="btn btn-sm btn-danger"
-                       onclick="return confirm('Tem certeza que deseja excluir este dispositivo?')">
-                       Excluir
+                       class="btn-action btn-action-delete"
+                       onclick="return confirm('Tem certeza que deseja excluir este dispositivo?')"
+                       data-bs-toggle="tooltip" title="Excluir">
+                       <i class="bi bi-trash-fill" style="font-size: 0.8rem;"></i>
                     </a>
                 </td>
             </tr>
             {% empty %}
-            <tr class="no-results"><td colspan="6" class="text-center">Nenhum dispositivo cadastrado.</td></tr>
+            <tr class="no-results"><td colspan="6" class="text-center py-5 text-muted">Nenhum dispositivo cadastrado no momento.</td></tr>
             {% endfor %}
-            <tr id="msgNenhumResultado" style="display: none;"><td colspan="6" class="text-center text-muted">Nenhum dispositivo encontrado com esse código.</td></tr>
+            <tr id="msgNenhumResultado" style="display: none;"><td colspan="6" class="text-center py-4 text-muted">Nenhum dispositivo encontrado com esse código.</td></tr>
         </tbody>
     </table>
 </div>
 
 <div class="modal fade" id="modalAddDispositivo" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow">
             <form action="{% url 'dispositivos:criar_dispositivo' %}" method="POST">
                 {% csrf_token %}
-                <div class="modal-header">
-                    <h5 class="modal-title">Adicionar Dispositivo</h5>
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark">Adicionar Dispositivo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Código</label>
-                        <input type="text" name="codigo" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Tipo</label>
-                        <select name="tipo_dispositivo" class="form-select" required>
-                            {% for value, label in tipos %}
-                                <option value="{{ value }}">{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Funcionário</label>
-                        <select name="funcionario" class="form-select select2-pessoa">
-                            <option value="">— Nenhum —</option>
-                            {% for f in funcionarios %}
-                                <option value="{{ f.id }}">{{ f.nome }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Código</label>
+                            <input type="text" name="codigo" class="form-control" required placeholder="Ex: NB-001">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Tipo</label>
+                            <select name="tipo_dispositivo" class="form-select" required>
+                                {% for value, label in tipos %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">Funcionário Responsável</label>
+                            <select name="funcionario" class="form-select select2-pessoa">
+                                <option value="">— Nenhum —</option>
+                                {% for f in funcionarios %}
+                                    <option value="{{ f.id }}">{{ f.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-tech-primary px-4">Salvar Registro</button>
                 </div>
             </form>
         </div>
@@ -156,47 +313,49 @@
 
 <div class="modal fade" id="modalEditDispositivo" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow">
             <form id="formEditar" method="POST">
                 {% csrf_token %}
-                <div class="modal-header">
-                    <h5 class="modal-title">Editar Dispositivo</h5>
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark">Editar Dispositivo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Código</label>
-                        <input type="text" id="editCodigo" name="codigo" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Tipo</label>
-                        <select id="editTipo" name="tipo_dispositivo" class="form-select" required>
-                            {% for value, label in tipos %}
-                                <option value="{{ value }}">{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Funcionário</label>
-                        <select id="editFuncionario" name="funcionario" class="form-select select2-pessoa">
-                            <option value="">— Nenhum —</option>
-                            {% for f in funcionarios %}
-                                <option value="{{ f.id }}">{{ f.nome }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select id="editStatus" name="status" class="form-select" required>
-                            {% for val, lab in status %}
-                                <option value="{{ val }}">{{ lab }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Código</label>
+                            <input type="text" id="editCodigo" name="codigo" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Tipo</label>
+                            <select id="editTipo" name="tipo_dispositivo" class="form-select" required>
+                                {% for value, label in tipos %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Status Atual</label>
+                            <select id="editStatus" name="status" class="form-select" required>
+                                {% for val, lab in status %}
+                                    <option value="{{ val }}">{{ lab }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Funcionário</label>
+                            <select id="editFuncionario" name="funcionario" class="form-select select2-pessoa">
+                                <option value="">— Nenhum —</option>
+                                {% for f in funcionarios %}
+                                    <option value="{{ f.id }}">{{ f.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light text-muted" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-tech-primary px-4">Salvar Alterações</button>
                 </div>
             </form>
         </div>
@@ -205,7 +364,7 @@
 
 <div class="modal fade" id="modalEquipamentos" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content" id="equipamentosContent">
+        <div class="modal-content border-0 shadow" id="equipamentosContent">
             </div>
     </div>
 </div>
@@ -213,29 +372,39 @@
 <script>
 $(document).ready(function() {
 
-    // --- LÓGICA DE BUSCA INSTANTÂNEA ---
-    $("#inputBuscaCodigo").on("keyup", function() {
-        var value = $(this).val().toLowerCase();
+    function filtrarTabela() {
+        var termoBusca = $("#inputBuscaCodigo").val().toLowerCase();
+        var statusFiltro = $("#filtroStatus").val();
         var hasResult = false;
 
-        $("#tabelaDispositivos tbody tr:not(#msgNenhumResultado):not(.no-results)").filter(function() {
-            // Busca apenas na coluna do Código (que tem a classe .codigo-item)
-            var textoCodigo = $(this).find(".codigo-item").text().toLowerCase();
-            var mostrar = textoCodigo.indexOf(value) > -1;
+        $("#tabelaDispositivos tbody tr:not(#msgNenhumResultado):not(.no-results)").each(function() {
+            var row = $(this);
             
-            $(this).toggle(mostrar);
-            if(mostrar) hasResult = true;
+            var textoCodigo = row.find(".codigo-badge").text().toLowerCase();
+            var textoFuncionario = row.text().toLowerCase();
+            var matchTexto = (textoCodigo.indexOf(termoBusca) > -1 || textoFuncionario.indexOf(termoBusca) > -1);
+
+            var rowStatus = row.data("status");
+            var matchStatus = (statusFiltro === "") || (rowStatus == statusFiltro);
+
+            if(matchTexto && matchStatus) {
+                row.show();
+                hasResult = true;
+            } else {
+                row.hide();
+            }
         });
 
-        // Mostra mensagem se não achou nada
-        if (!hasResult && value !== "") {
+        if (!hasResult) {
             $("#msgNenhumResultado").show();
         } else {
             $("#msgNenhumResultado").hide();
         }
-    });
+    }
 
-    // --- SEUS SCRIPTS ORIGINAIS ---
+    $("#inputBuscaCodigo").on("keyup", filtrarTabela);
+    $("#filtroStatus").on("change", filtrarTabela);
+
     $('.select2-pessoa').each(function() {
         $(this).select2({
             placeholder: "Selecione o funcionário",
@@ -271,12 +440,12 @@ $(document).ready(function() {
         let codigo = $(this).data("codigo");
 
         $("#modalEquipamentos").modal("show");
-        $("#equipamentosContent").html("<div class='p-4 text-center'><div class='spinner-border text-primary'></div><p class='mt-2'>Carregando itens...</p></div>");
+        $("#equipamentosContent").html("<div class='p-5 text-center'><div class='spinner-border text-primary'></div><p class='mt-3 text-muted'>Carregando itens...</p></div>");
 
         $.get("/equipamentos/dispositivo/"+id+"/", function(data){
             $("#equipamentosContent").html(data);
         }).fail(function() {
-            $("#equipamentosContent").html("<div class='modal-header'><h5 class='modal-title text-danger'>Erro</h5><button class='btn-close' data-bs-dismiss='modal'></button></div><div class='modal-body'>Não foi possível carregar os equipamentos.</div>");
+            $("#equipamentosContent").html("<div class='modal-header border-0'><h5 class='modal-title text-danger'>Erro</h5><button class='btn-close' data-bs-dismiss='modal'></button></div><div class='modal-body'>Não foi possível carregar os equipamentos.</div>");
         });
     });
 

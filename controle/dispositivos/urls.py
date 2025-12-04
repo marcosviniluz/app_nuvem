@@ -16,4 +16,6 @@ urlpatterns = [
     path('delete/<int:id>/', views.deletar_dispositivo, name='deletar_dispositivo'),
     
     path('desvincular/<int:id>/', views.desvincular_dispositivo, name='desvincular_dispositivo'),
+    
+    path('dashboard/', views.dashboard_dispositivos, name='dashboard_dispositivos'),
 ]
