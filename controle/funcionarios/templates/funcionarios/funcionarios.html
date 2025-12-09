@@ -208,12 +208,14 @@
         <div class="col-md-4">
             <div class="position-relative">
                 <i class="bi bi-building search-icon"></i>
+                
                 <select id="filtroUnidade" class="search-input form-select" style="cursor: pointer;">
                     <option value="">Todas as Unidades</option>
-                    {% for u in unidades %}
-                        <option value="{{ u.id }}">{{ u.nome }}</option>
+                    {% for codigo, nome in unidades %}
+                        <option value="{{ codigo }}">{{ nome }}</option>
                     {% endfor %}
                 </select>
+
             </div>
         </div>
     </div>
@@ -246,7 +248,7 @@
                     </thead>
                     <tbody id="listaAtivos">
                     {% for f in ativos %}
-                        <tr data-nome="{{ f.nome|lower }}" data-unidade="{{ f.unidade_trabalho.id }}">
+                        <tr data-nome="{{ f.nome|lower }}" data-unidade="{{ f.unidade_trabalho }}">
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-circle">
@@ -258,7 +260,9 @@
                             <td>{{ f.email }}</td>
                             <td>
                                 {% if f.unidade_trabalho %}
-                                    <span class="badge-unit"><i class="bi bi-building me-1"></i> {{ f.unidade_trabalho.nome }}</span>
+                                    <span class="badge-unit">
+                                        <i class="bi bi-building me-1"></i> {{ f.get_unidade_trabalho_display }}
+                                    </span>
                                 {% else %}
                                     <span class="text-muted small">—</span>
                                 {% endif %}
@@ -301,7 +305,7 @@
                     </thead>
                     <tbody id="listaInativos">
                     {% for f in demitidos %}
-                        <tr data-nome="{{ f.nome|lower }}" data-unidade="{{ f.unidade_trabalho.id }}">
+                        <tr data-nome="{{ f.nome|lower }}" data-unidade="{{ f.unidade_trabalho }}">
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-circle bg-light text-muted">
@@ -356,8 +360,8 @@
                         <label class="form-label text-muted small fw-bold">Unidade</label>
                         <select name="unidade_trabalho" class="form-select">
                             <option value="">Selecione...</option>
-                            {% for u in unidades %}
-                                <option value="{{ u.id }}">{{ u.nome }}</option>
+                            {% for codigo, nome in unidades %}
+                                <option value="{{ codigo }}">{{ nome }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -393,8 +397,8 @@
                         <label class="form-label text-muted small fw-bold">Unidade</label>
                         <select id="editUnidade" name="unidade_trabalho" class="form-select">
                             <option value="">Selecione...</option>
-                            {% for u in unidades %}
-                                <option value="{{ u.id }}">{{ u.nome }}</option>
+                            {% for codigo, nome in unidades %}
+                                <option value="{{ codigo }}">{{ nome }}</option>
                             {% endfor %}
                         </select>
                     </div>

@@ -1,26 +1,32 @@
 from django.db import models
 from django.utils import timezone
 
-class UnidadeTrabalho(models.Model):
-    nome = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.nome
-
 class Funcionario(models.Model):
     STATUS_CHOICES = [
         ("ATIVO", "Ativo"),
         ("DEMITIDO", "Demitido"),
     ]
 
+    # AQUI ESTÁ A MUDANÇA: Lista fixa de unidades direto no código
+    UNIDADE_CHOICES = [
+        ("VILA_OLIMPIA", "Vila Olímpia"),
+        ("ITAPEVI", "Itapevi"),
+        ("GARUVA", "Garuva"),
+        ("NAVEGANTES_CD1", "Navegantes CD1"),
+        ("NAVEGANTES_CD2", "Navegantes CD2"),
+        
+    ]
+
     nome = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    unidade_trabalho = models.ForeignKey(
-        UnidadeTrabalho,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
+    
+    # Campo alterado de ForeignKey para CharField com choices
+    unidade_trabalho = models.CharField(
+        max_length=50,
+        choices=UNIDADE_CHOICES,
+        default="MATRIZ"
     )
+
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,

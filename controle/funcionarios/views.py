@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 
-from .models import Funcionario, UnidadeTrabalho, HistoricoFuncionario
+# REMOVIDO: UnidadeTrabalho (não existe mais como tabela)
+from .models import Funcionario, HistoricoFuncionario
 
 # IMPORTANTE: Importar os modelos dos outros apps para desvincular
 from dispositivos.models import Dispositivo
@@ -13,7 +14,9 @@ from equipamentos.models import EquipamentoAuxiliar
 def listar_funcionarios(request):
     ativos = Funcionario.objects.filter(status="ATIVO").order_by("nome")
     demitidos = Funcionario.objects.filter(status="DEMITIDO").order_by("nome")
-    unidades = UnidadeTrabalho.objects.all().order_by("nome")
+    
+    # MUDANÇA: Passamos a lista fixa de opções definida no Model
+    unidades = Funcionario.UNIDADE_CHOICES
 
     return render(request, "funcionarios/funcionarios.html", {
         "ativos": ativos,
@@ -28,7 +31,8 @@ def criar_funcionario(request):
 
     nome = (request.POST.get("nome") or "").strip()
     email = (request.POST.get("email") or "").strip()
-    unidade_id = request.POST.get("unidade_trabalho")
+    # Agora recebemos o código (ex: "MATRIZ"), não mais um ID numérico
+    unidade_code = request.POST.get("unidade_trabalho") 
 
     if not nome or not email:
         messages.error(request, "Nome e email são obrigatórios.")
@@ -41,20 +45,20 @@ def criar_funcionario(request):
     novo_func = Funcionario.objects.create(
         nome=nome,
         email=email,
-        unidade_trabalho_id=unidade_id,
+        # Salvamos a string diretamente no campo CharField
+        unidade_trabalho=unidade_code, 
         status="ATIVO"
     )
 
     HistoricoFuncionario.objects.create(
         funcionario=novo_func,
         acao="CONTRATADO",
-        descricao=f"Funcionário {nome} admitido."
+        descricao=f"Funcionário {nome} admitido na unidade {novo_func.get_unidade_trabalho_display()}."
     )
 
     messages.success(request, "Funcionário contratado com sucesso.")
     return redirect("funcionarios:listar_funcionarios")
 
-# --- ESSA ERA A FUNÇÃO QUE FALTAVA ---
 @login_required
 def get_funcionario_json(request, id):
     """Retorna dados JSON para preencher o modal de edição"""
@@ -64,30 +68,41 @@ def get_funcionario_json(request, id):
         "id": funcionario.id,
         "nome": funcionario.nome,
         "email": funcionario.email,
-        # Retorna o ID da unidade ou string vazia se for null
-        "unidade_trabalho": funcionario.unidade_trabalho.id if funcionario.unidade_trabalho else ""
+        # MUDANÇA: Retorna a string do código (ex: "FILIAL_SP")
+        "unidade_trabalho": funcionario.unidade_trabalho 
     })
-# -------------------------------------
 
 @login_required
 def editar_funcionario(request, id):
     funcionario = get_object_or_404(Funcionario, id=id)
 
     if request.method == "POST":
-        old_unidade = funcionario.unidade_trabalho
+        # Guardamos o valor antigo para comparar
+        old_unidade_code = funcionario.unidade_trabalho 
         
         funcionario.nome = request.POST.get("nome") or funcionario.nome
         funcionario.email = request.POST.get("email") or funcionario.email
-        new_unidade_id = request.POST.get("unidade_trabalho")
         
-        if new_unidade_id and str(old_unidade.id if old_unidade else '') != str(new_unidade_id):
-             HistoricoFuncionario.objects.create(
+        # Novo código vindo do form
+        new_unidade_code = request.POST.get("unidade_trabalho") 
+        
+        # Comparação de strings
+        if new_unidade_code and old_unidade_code != new_unidade_code:
+            # Usamos get_..._display() para pegar o nome bonito no histórico
+            nome_unidade_antiga = funcionario.get_unidade_trabalho_display()
+            
+            # Atualizamos o objeto para pegar o novo display name
+            funcionario.unidade_trabalho = new_unidade_code
+            nome_unidade_nova = funcionario.get_unidade_trabalho_display()
+
+            HistoricoFuncionario.objects.create(
                 funcionario=funcionario,
                 acao="TRANSFERIDO",
-                descricao=f"Mudou de {old_unidade} para nova unidade."
+                descricao=f"Transferido de {nome_unidade_antiga} para {nome_unidade_nova}."
             )
         
-        funcionario.unidade_trabalho_id = new_unidade_id or None
+        # Se não houve mudança de unidade, mas houve de nome/email, salvamos aqui
+        funcionario.unidade_trabalho = new_unidade_code
         funcionario.save()
         messages.success(request, "Dados atualizados.")
 
