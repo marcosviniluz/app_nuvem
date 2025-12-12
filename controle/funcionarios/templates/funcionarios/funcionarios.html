@@ -208,14 +208,12 @@
         <div class="col-md-4">
             <div class="position-relative">
                 <i class="bi bi-building search-icon"></i>
-                
                 <select id="filtroUnidade" class="search-input form-select" style="cursor: pointer;">
                     <option value="">Todas as Unidades</option>
                     {% for codigo, nome in unidades %}
                         <option value="{{ codigo }}">{{ nome }}</option>
                     {% endfor %}
                 </select>
-
             </div>
         </div>
     </div>
@@ -413,18 +411,14 @@
 </div>
 
 <div class="modal fade" id="modalHistorico" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark">Histórico Completo</h5>
+                <h5 class="modal-title fw-bold text-dark">Inventário do Funcionário</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="conteudoHistorico">
-                <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-3 text-muted">Carregando histórico...</p>
+            <div class="modal-body p-0" id="conteudoHistorico">
                 </div>
-            </div>
         </div>
     </div>
 </div>
@@ -459,7 +453,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     
-    // Tooltips do Bootstrap
+    // Inicializa Tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl)
@@ -467,44 +461,36 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // --- 1. BUSCA POR NOME ---
     const inputBusca = document.getElementById("busca");
-    inputBusca.addEventListener("keyup", function() {
-        const termo = this.value.toLowerCase();
-        // Filtra nas duas tabelas (Ativos e Inativos)
-        document.querySelectorAll("tbody tr").forEach(row => {
-            const nome = row.dataset.nome;
-            // Se tiver classe de "Nenhum registro" ignora
-            if(nome) {
-                // Checa também o filtro de unidade atual
-                const unidadeSelecionada = document.getElementById("filtroUnidade").value;
-                const rowUnidade = row.dataset.unidade;
-                
-                const matchNome = nome.includes(termo);
-                const matchUnidade = (unidadeSelecionada === "" || rowUnidade === unidadeSelecionada);
-
-                if(matchNome && matchUnidade) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
+    if(inputBusca){
+        inputBusca.addEventListener("keyup", function() {
+            const termo = this.value.toLowerCase();
+            document.querySelectorAll("tbody tr").forEach(row => {
+                const nome = row.dataset.nome;
+                if(nome) {
+                    const unidadeSelecionada = document.getElementById("filtroUnidade").value;
+                    const rowUnidade = row.dataset.unidade;
+                    const matchNome = nome.includes(termo);
+                    const matchUnidade = (unidadeSelecionada === "" || rowUnidade === unidadeSelecionada);
+                    row.style.display = (matchNome && matchUnidade) ? "" : "none";
                 }
-            }
+            });
         });
-    });
+    }
 
     // --- 2. FILTRO POR UNIDADE ---
     const selectUnidade = document.getElementById("filtroUnidade");
-    selectUnidade.addEventListener("change", function() {
-        // Dispara o evento de busca para reaproveitar a lógica combinada
-        inputBusca.dispatchEvent(new Event('keyup'));
-    });
+    if(selectUnidade){
+        selectUnidade.addEventListener("change", function() {
+            inputBusca.dispatchEvent(new Event('keyup'));
+        });
+    }
 
     // --- 3. MODAL EDITAR ---
     document.body.addEventListener('click', function(e) {
-        // Procura o botão clicado ou o pai (caso clique no ícone)
         const btn = e.target.closest('.btnEditar');
         if (btn) {
             const id = btn.dataset.id;
             const modal = new bootstrap.Modal(document.getElementById('modalEditar'));
-            
             fetch(`/funcionarios/api/get/${id}/`)
                 .then(r => r.json())
                 .then(data => {
@@ -512,7 +498,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     document.getElementById("editEmail").value = data.email;
                     document.getElementById("editUnidade").value = data.unidade_trabalho;
                     document.getElementById("formEditar").action = `/funcionarios/editar/${id}/`;
-                    
                     modal.show();
                 })
                 .catch(err => alert("Erro ao carregar dados."));
@@ -525,33 +510,104 @@ document.addEventListener("DOMContentLoaded", function() {
         if (btn) {
             const id = btn.dataset.id;
             const nome = btn.dataset.nome;
-            
             document.getElementById("nomeDemitir").innerText = nome;
             document.getElementById("formDemitir").action = `/funcionarios/demitir/${id}/`;
-            
             const modal = new bootstrap.Modal(document.getElementById('modalDemitir'));
             modal.show();
         }
     });
 
-    // --- 5. MODAL HISTÓRICO ---
+    // --- 5. MODAL HISTÓRICO (DESIGN MELHORADO) ---
     document.body.addEventListener('click', function(e) {
         const btn = e.target.closest('.btnHistorico');
         if (btn) {
             const id = btn.dataset.id;
-            const modal = new bootstrap.Modal(document.getElementById('modalHistorico'));
+            const modalEl = document.getElementById('modalHistorico');
+            const modal = new bootstrap.Modal(modalEl);
             const container = document.getElementById("conteudoHistorico");
             
+            // Abre o modal com Loading
             modal.show();
-            container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Carregando histórico...</p></div>';
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+                    <p class="mt-3 text-muted fw-bold">Consultando inventário...</p>
+                </div>`;
 
             fetch(`/funcionarios/historico/${id}/`)
-                .then(r => r.text())
-                .then(html => {
+                .then(response => response.json())
+                .then(data => {
+                    // Cabeçalho
+                    let html = `
+                        <div class="p-4 bg-light border-bottom">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle text-white me-3 d-flex align-items-center justify-content-center shadow-sm" 
+                                     style="width: 55px; height: 55px; font-size: 1.4rem; background: linear-gradient(135deg, #1e1e2f, #3b3b58); border-radius: 50%;">
+                                    ${data.nome_funcionario.charAt(0)}
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-1">${data.nome_funcionario}</h5>
+                                    <span class="badge bg-white text-secondary border shadow-sm px-3 py-2 rounded-pill">
+                                        <i class="bi bi-building me-1"></i> ${data.unidade}
+                                    </span>
+                                </div>
+                                <div class="ms-auto text-end border-start ps-4">
+                                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 1px;">Total de Itens</small>
+                                    <span class="h3 fw-bold text-primary mb-0">${data.total}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-white" style="min-height: 250px;">
+                    `;
+
+                    // Lista
+                    if (data.itens.length === 0) {
+                        html += `
+                            <div class="text-center py-5 opacity-50">
+                                <div class="mb-3 bg-light rounded-circle d-inline-flex p-4">
+                                    <i class="bi bi-box-seam display-4 text-secondary"></i>
+                                </div>
+                                <p class="mt-2 fw-bold text-muted">Nenhum equipamento vinculado.</p>
+                            </div>
+                        `;
+                    } else {
+                        html += `<div class="d-flex flex-column gap-3">`;
+                        data.itens.forEach(item => {
+                            let isPrincipal = item.categoria === 'Principal';
+                            let iconColor = isPrincipal ? 'text-primary' : 'text-warning';
+                            let iconBg = isPrincipal ? 'bg-primary bg-opacity-10' : 'bg-warning bg-opacity-10';
+                            let borderColor = isPrincipal ? '#0d6efd' : '#ffc107';
+
+                            html += `
+                                <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                                    <div class="card-body p-3 d-flex align-items-center position-relative">
+                                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background-color: ${borderColor};"></div>
+                                        
+                                        <div class="rounded-circle ${iconBg} ${iconColor} d-flex align-items-center justify-content-center me-3 ms-2" 
+                                             style="width: 45px; height: 45px;">
+                                            <i class="bi ${item.icone} fs-5"></i>
+                                        </div>
+                                        
+                                        <div class="flex-grow-1">
+                                            <h6 class="fw-bold text-dark mb-0">${item.nome}</h6>
+                                            <small class="text-muted text-uppercase" style="font-size: 0.75rem;">${item.detalhe}</small>
+                                        </div>
+                                        
+                                        <span class="badge ${isPrincipal ? 'bg-primary' : 'bg-secondary'} rounded-pill px-3">
+                                            ${item.categoria}
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += `</div>`;
+                    }
+                    html += `</div>`; 
                     container.innerHTML = html;
                 })
                 .catch(err => {
-                    container.innerHTML = '<p class="text-danger text-center py-4">Erro ao carregar histórico.</p>';
+                    console.error(err);
+                    container.innerHTML = `<div class="text-center py-5 text-danger"><i class="bi bi-exclamation-triangle display-4 mb-3 d-block"></i><p class="fw-bold">Erro ao carregar dados.</p></div>`;
                 });
         }
     });

@@ -12,8 +12,8 @@ class Funcionario(models.Model):
         ("VILA_OLIMPIA", "Vila Olímpia"),
         ("ITAPEVI", "Itapevi"),
         ("GARUVA", "Garuva"),
-        ("NAVEGANTES_CD1", "Navegantes CD1"),
-        ("NAVEGANTES_CD2", "Navegantes CD2"),
+        ("NAVEGANTES_CD1", "Navegantes CD01"),
+        ("NAVEGANTES_CD2", "Navegantes CD02"),
         
     ]
 

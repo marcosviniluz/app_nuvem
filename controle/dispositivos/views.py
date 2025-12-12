@@ -1,8 +1,9 @@
+import csv
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseBadRequest
-from django.db.models import Count, Q  # Importante para o Dashboard
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.db.models import Count, Q 
 
 # Importa os models locais
 from .models import Dispositivo, STATUS_CHOICES, TIPO_DISPOSITIVO_CHOICES
@@ -127,7 +128,43 @@ def desvincular_dispositivo(request, id):
     messages.info(request, f"Dispositivo {dispositivo.codigo} desvinculado e devolvido ao estoque.")
     return redirect('dispositivos:listar_dispositivos')
 
-# --- NOVA VIEW DO DASHBOARD (Agora com indentação correta) ---
+@login_required
+def exportar_dispositivos_csv(request):
+    """
+    Gera e baixa um arquivo CSV com a lista de dispositivos E seus equipamentos auxiliares.
+    """
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="lista_dispositivos_completa.csv"'
+    
+    response.write(u'\ufeff'.encode('utf8'))
+    
+    writer = csv.writer(response, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    
+    writer.writerow(['Código', 'Tipo', 'Status', 'Funcionário Responsável', 'Equipamentos Auxiliares'])
+    
+    
+    dispositivos = Dispositivo.objects.all().select_related('funcionario').prefetch_related('equipamentoauxiliar_set').order_by('codigo')
+    
+    for d in dispositivos:
+        nome_func = d.funcionario.nome if d.funcionario else 'Não atribuído'
+        
+        #
+        lista_equipamentos = [str(eq) for eq in d.equipamentoauxiliar_set.all()] 
+        
+       
+        equipamentos_str = " | ".join(lista_equipamentos) if lista_equipamentos else "Nenhum"
+        
+        writer.writerow([
+            d.codigo,
+            d.get_tipo_dispositivo_display(),
+            d.get_status_display(),
+            nome_func,
+            equipamentos_str 
+        ])
+        
+    return response
+
 @login_required
 def dashboard_dispositivos(request):
     # 1. Totais Gerais (Os 3 Cards)

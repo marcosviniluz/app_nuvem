@@ -1,20 +1,19 @@
 <style>
-    /* Estilos Locais para o Modal (baseado na identidade Tech) */
     .modal-header-tech {
-        background-color: #422c76; /* Lilás */
+        background-color: #422c76; 
         color: white;
         border-bottom: none;
     }
     
     .search-box-tech {
-        background-color: #faf9f5; /* Off-white */
-        border: 1px dashed #422c76; /* Borda tracejada Lilás suave */
+        background-color: #faf9f5;
+        border: 1px dashed #422c76; 
         border-radius: 12px;
         padding: 15px;
     }
 
     .btn-action-magenta {
-        background-color: #ff2f69; /* Magenta */
+        background-color: #ff2f69; 
         color: white;
         border: none;
         border-radius: 50px;
@@ -34,9 +33,9 @@
         transform: none;
     }
 
-    /* Tabela Tech Minimalista */
+
     .table-tech-modal thead th {
-        color: #414042; /* Grafite */
+        color: #414042; 
         font-weight: 700;
         text-transform: uppercase;
         font-size: 0.75rem;
@@ -48,10 +47,9 @@
         font-size: 0.9rem;
     }
 
-    /* Badges Customizadas */
     .badge-status-use {
-        background-color: rgba(66, 44, 118, 0.1); /* Fundo Lilás claro */
-        color: #422c76; /* Texto Lilás */
+        background-color: rgba(66, 44, 118, 0.1); 
+        color: #422c76; 
         border: 1px solid rgba(66, 44, 118, 0.2);
     }
     
@@ -72,7 +70,6 @@
         color: #000;
     }
 
-    /* Select2 Ajustes */
     .select2-container--default .select2-selection--single {
         border-radius: 8px;
         height: 38px;
@@ -207,17 +204,15 @@
 </div>
 
 <script>
-    // Inicializa Tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl)
     });
 
-    // Inicializa Select2
     $('.select2-estoque').select2({
         placeholder: "Buscar no estoque disponível...",
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#modalEquipamentos') // Garante que a lista apareça sobre o modal
+        dropdownParent: $('#modalEquipamentos') 
     });
 </script>

@@ -6,19 +6,11 @@
 
 <style>
     :root {
-        /* Cores extraídas da imagem enviada */
         --tech-navy: #1e1e2f;
-        /* Cor do botão '+ Novo Dispositivo' e Títulos */
         --tech-bg: #f5f7fb;
-        /* Cor do fundo da página */
         --tech-card-bg: #ffffff;
-        /* Branco puro */
         --tech-text-main: #344767;
-        /* Cinza escuro para textos */
         --tech-text-muted: #8898aa;
-        /* Cinza claro para legendas */
-
-        /* Cores de Status (Pastel) */
         --status-green-bg: #d1e7dd;
         --status-green-text: #0f5132;
         --status-yellow-bg: #fff3cd;
@@ -33,23 +25,34 @@
         background-color: var(--tech-bg);
         color: var(--tech-text-main);
         font-family: 'Inter', sans-serif;
-        /* Se tiver importado, senão usa padrão */
     }
 
-    /* Título Principal */
+    /* --- INICIO DA ANIMAÇÃO DE ALERTA --- */
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+
+    .alert-critical {
+        background-color: rgba(220, 53, 69, 0.15) !important;
+        border: 1px solid rgba(220, 53, 69, 0.5) !important;
+        animation: pulse-red 2s infinite;
+        color: #dc3545 !important;
+    }
+    /* --- FIM DA ANIMAÇÃO DE ALERTA --- */
+
     .page-title {
         color: var(--tech-text-main);
         font-weight: 700;
         letter-spacing: -0.5px;
     }
 
-    /* Botão Principal (Igual ao da imagem) */
     .btn-tech-action {
         background-color: var(--tech-navy);
         color: white;
         border: none;
         border-radius: 50px;
-        /* Arredondado estilo Pill */
         padding: 0.6rem 1.5rem;
         font-weight: 600;
         box-shadow: 0 4px 6px rgba(30, 30, 47, 0.2);
@@ -58,20 +61,16 @@
 
     .btn-tech-action:hover {
         background-color: #2c2c44;
-        /* Um pouco mais claro no hover */
         transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(30, 30, 47, 0.3);
         color: white;
     }
 
-    /* Cards de Estoque */
     .card-stock {
         background-color: var(--tech-card-bg);
         border: none;
         border-radius: 16px;
-        /* Borda bem arredondada como na imagem */
         box-shadow: 0 2px 15px rgba(0, 0, 0, 0.03);
-        /* Sombra muito suave */
         transition: transform 0.2s ease;
         height: 100%;
         position: relative;
@@ -83,7 +82,6 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
 
-    /* Borda lateral colorida para identificar o card (opcional, mantive discreto) */
     .card-stock::before {
         content: '';
         position: absolute;
@@ -95,7 +93,6 @@
         opacity: 0.1;
     }
 
-    /* Badge de Total */
     .badge-total {
         background-color: var(--tech-bg);
         color: var(--tech-navy);
@@ -105,7 +102,6 @@
         font-size: 1.1rem;
     }
 
-    /* Barras de Progresso - Estilo Clean */
     .progress {
         background-color: #f0f2f5;
         height: 8px;
@@ -113,9 +109,6 @@
         overflow: hidden;
     }
 
-
-
-    /* Mini Stats (Quadrados inferiores) */
     .stat-box {
         background-color: #f8f9fa;
         border-radius: 12px;
@@ -133,20 +126,10 @@
         margin-bottom: 4px;
     }
 
-    /* Cores específicas para os números */
-    .text-avail {
-        color: #2dce89;
-    }
+    .text-avail { color: #2dce89; }
+    .text-use { color: #5e72e4; }
+    .text-maint { color: #fb6340; }
 
-    .text-use {
-        color: #5e72e4;
-    }
-
-    .text-maint {
-        color: #fb6340;
-    }
-
-    /* Botão 'Gerenciar Detalhes' */
     .btn-outline-tech {
         border: 1px solid #e2e8f0;
         color: var(--tech-text-main);
@@ -163,7 +146,6 @@
         background-color: #f8f9fa;
     }
 
-    /* Modal Styling */
     .modal-header-tech {
         background-color: var(--tech-navy);
         color: white;
@@ -195,9 +177,9 @@
 
                     <div class="d-flex justify-content-between align-items-start mb-4">
                         <div>
-                            <h5 class="fw-bold mb-1" style="color: var(--tech-text-main);">{{ item.tipo_equipamento_aux }}
+                            <h5 class="fw-bold mb-1" style="color: var(--tech-text-main);">
+                                {{ item.tipo_equipamento_aux }}
                             </h5>
-                            
                         </div>
                         <span class="badge-total shadow-sm">
                             {{ item.total }}
@@ -206,13 +188,13 @@
 
                     <div class="progress mb-4">
                         {% if item.total %}
-                        {% widthratio item.disponiveis item.total 100 as pct_livre %}
-                        {% widthratio item.ativos item.total 100 as pct_ativo %}
-                        {% widthratio item.manutencao item.total 100 as pct_manut %}
+                            {% widthratio item.disponiveis item.total 100 as pct_livre %}
+                            {% widthratio item.ativos item.total 100 as pct_ativo %}
+                            {% widthratio item.manutencao item.total 100 as pct_manut %}
                         {% else %}
-                        {% widthratio 0 1 100 as pct_livre %}
-                        {% widthratio 0 1 100 as pct_ativo %}
-                        {% widthratio 0 1 100 as pct_manut %}
+                            {% widthratio 0 1 100 as pct_livre %}
+                            {% widthratio 0 1 100 as pct_ativo %}
+                            {% widthratio 0 1 100 as pct_manut %}
                         {% endif %}
 
                         <div class="progress-bar bg-success" style="width: {{ pct_livre }}%" title="Disponíveis"></div>
@@ -221,33 +203,38 @@
                     </div>
 
                     <div class="row text-center g-2">
-                        <div class="row text-center g-2">
-                            <div class="col">
-                                <div
-                                    style="background-color: rgba(45, 206, 137, 0.1); border-radius: 12px; padding: 12px 8px; text-align: center;">
-                                    <span
-                                        style="display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; color: #2dce89;">Livres</span>
-                                    <span class="h5 fw-bold mb-0" style="color: #2dce89;">{{ item.disponiveis }}</span>
-                                </div>
+                        
+                        <div class="col">
+                            <div class="{% if item.disponiveis <= 3 %}alert-critical{% endif %}"
+                                 style="border-radius: 12px; padding: 12px 8px; text-align: center; transition: all 0.3s;
+                                        {% if item.disponiveis > 3 %}background-color: rgba(45, 206, 137, 0.1);{% endif %}">
+                                
+                                <span style="display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+                                             {% if item.disponiveis > 3 %}color: #2dce89;{% endif %}">
+                                    Livres
+                                </span>
+                                
+                                <span class="h5 fw-bold mb-0" 
+                                      style="{% if item.disponiveis > 3 %}color: #2dce89;{% endif %}">
+                                    {{ item.disponiveis }}
+                                </span>
                             </div>
-
-                            <div class="col">
-                                <div
-                                    style="background-color: rgba(245, 158, 11, 0.1); border-radius: 12px; padding: 12px 8px; text-align: center;">
-                                    <span
-                                        style="display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; color: #f59e0b;">Em
-                                        Uso</span>
-                                    <span class="h5 fw-bold mb-0" style="color: #f59e0b;">{{ item.ativos }}</span>
-                                </div>
+                        </div>
+                        <div class="col">
+                            <div style="background-color: rgba(245, 158, 11, 0.1); border-radius: 12px; padding: 12px 8px; text-align: center;">
+                                <span style="display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; color: #f59e0b;">
+                                    Em Uso
+                                </span>
+                                <span class="h5 fw-bold mb-0" style="color: #f59e0b;">{{ item.ativos }}</span>
                             </div>
+                        </div>
 
-                            <div class="col">
-                                <div
-                                    style="background-color: rgba(245, 54, 92, 0.1); border-radius: 12px; padding: 12px 8px; text-align: center;">
-                                    <span
-                                        style="display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; color: #f5365c;">Manut.</span>
-                                    <span class="h5 fw-bold mb-0" style="color: #f5365c;">{{ item.manutencao }}</span>
-                                </div>
+                        <div class="col">
+                            <div style="background-color: rgba(245, 54, 92, 0.1); border-radius: 12px; padding: 12px 8px; text-align: center;">
+                                <span style="display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; color: #f5365c;">
+                                    Manut.
+                                </span>
+                                <span class="h5 fw-bold mb-0" style="color: #f5365c;">{{ item.manutencao }}</span>
                             </div>
                         </div>
                     </div>

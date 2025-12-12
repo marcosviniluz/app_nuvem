@@ -19,5 +19,4 @@ urlpatterns = [
     path("api/get/<int:id>/", views.get_funcionario_json, name="get_funcionario_json"),
 
     # 2. Busca o HTML do histórico
-    path("historico/<int:id>/", views.get_historico_json, name="historico_funcionario"),
-]
+    path('historico/<int:id>/', views.historico_funcionario, name='historico_funcionario'),]
