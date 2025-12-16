@@ -326,7 +326,7 @@
                             <select name="funcionario" class="form-select select2-pessoa">
                                 <option value="">— Nenhum —</option>
                                 {% for f in funcionarios %}
-                                    <option value="{{ f.id }}">{{ f.nome }}</option>
+                                    <option value="{{ f.id }}">{{ f.nome }} - {{ f.email }}</option>
                                 {% endfor %}
                             </select>
                         </div>
