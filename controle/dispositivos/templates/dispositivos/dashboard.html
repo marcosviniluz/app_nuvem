@@ -4,11 +4,13 @@
 
 {% block content %}
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <div class="container-fluid mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h2 class="fw-bold text-dark mb-0">OPERAH</h2>
+            <h2 class="fw-bold text-dark mb-0">Notebooks</h2>
         </div>
         <div>
             <a href="{% url 'dispositivos:listar_dispositivos' %}" class="btn btn-outline-secondary btn-lg px-4">
@@ -28,7 +30,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 class="text-muted text-uppercase fw-bold mb-3">Em Uso</h4>
-                            <h1 class="display-3 fw-bold text-danger mb-0">{{ dados.ativos|default:0 }}</h1>
+                            <h1 id="live-ativos" class="display-3 fw-bold text-danger mb-0">{{ dados.ativos|default:0 }}</h1>
                         </div>
                         <div class="bg-danger bg-opacity-10 p-4 rounded-circle">
                             <i class="bi bi-person-check-fill text-danger" style="font-size: 3.5rem;"></i>
@@ -49,7 +51,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 class="text-muted text-uppercase fw-bold mb-3">Disponíveis</h4>
-                            <h1 class="display-3 fw-bold text-success mb-0">{{ dados.disponiveis|default:0 }}</h1>
+                            <h1 id="live-disponiveis" class="display-3 fw-bold text-success mb-0">{{ dados.disponiveis|default:0 }}</h1>
                         </div>
                         <div class="bg-success bg-opacity-10 p-4 rounded-circle">
                             <i class="bi bi-box-seam-fill text-success" style="font-size: 3.5rem;"></i>
@@ -70,7 +72,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 class="text-muted text-uppercase fw-bold mb-3">Manutenção</h4>
-                            <h1 class="display-3 fw-bold text-warning mb-0">{{ dados.manutencao|default:0 }}</h1>
+                            <h1 id="live-manutencao" class="display-3 fw-bold text-warning mb-0">{{ dados.manutencao|default:0 }}</h1>
                         </div>
                         <div class="bg-warning bg-opacity-10 p-4 rounded-circle">
                             <i class="bi bi-tools text-warning" style="font-size: 3.5rem;"></i>
@@ -87,5 +89,27 @@
 
     </div>
 </div>
+
+<script>
+    $(document).ready(function() {
+        
+        function atualizarDashboard() {
+            $.ajax({
+                url: "{% url 'dispositivos:api_dados_dashboard' %}", 
+                type: 'GET',
+                success: function(response) {
+                    $('#live-ativos').text(response.ativos);
+                    $('#live-disponiveis').text(response.disponiveis);
+                    $('#live-manutencao').text(response.manutencao);
+                },
+                error: function(xhr, status, error) {
+                    console.log("Erro ao atualizar dashboard: ", error);
+                }
+            });
+        }
+
+        setInterval(atualizarDashboard, 5000);
+    });
+</script>
 
 {% endblock %}

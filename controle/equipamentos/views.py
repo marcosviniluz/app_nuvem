@@ -17,14 +17,16 @@ def equipamentos_funcionario(request, funcionario_id):
         tipo = request.POST.get("tipo_equipamento_aux")
 
         if not nome or not tipo:
-            messages.error(request, "Nome e tipo são obrigatórios.")
+            # messages.error(request, "Nome e tipo são obrigatórios.")
+            print("Nome e tipo obrigátorios")
         else:
             EquipamentoAuxiliar.objects.create(
                 nome=nome,
                 tipo_equipamento_aux=tipo,
                 funcionario=funcionario
             )
-            messages.success(request, f"Equipamento adicionado para {funcionario.nome}.")
+            # messages.success(request, f"Equipamento adicionado para {funcionario.nome}.")
+        
         return redirect('equipamentos:equipamentos_funcionario', funcionario_id=funcionario_id)
 
     return render(request, "equipamentos/listar.html", {
@@ -52,9 +54,9 @@ def equipamentos_dispositivo(request, dispositivo_id):
                 item.funcionario = dispositivo.funcionario
             
             item.save() 
-            messages.success(request, f"{item.nome} vinculado com sucesso!")
-        else:
-            messages.error(request, "Selecione um item do estoque.")
+            # messages.success(request, f"{item.nome} vinculado com sucesso!")
+        
+        # O else foi removido pois estava vazio (apenas comentários) e causava erro
             
         return redirect('dispositivos:listar_dispositivos')
 
@@ -79,7 +81,7 @@ def editar_equipamento(request, id):
         equipamento.nome = request.POST.get("nome") or equipamento.nome
         equipamento.tipo_equipamento_aux = request.POST.get("tipo_equipamento_aux") or equipamento.tipo_equipamento_aux
         equipamento.save()
-        messages.success(request, "Equipamento atualizado.")
+        # messages.success(request, "Equipamento atualizado.")
         
         if redirect_func_id:
             return redirect('equipamentos:equipamentos_funcionario', funcionario_id=redirect_func_id)
@@ -93,7 +95,7 @@ def deletar_equipamento(request, id):
     redirect_func_id = equipamento.funcionario.id if equipamento.funcionario else None
     
     equipamento.delete()
-    messages.info(request, "Equipamento removido.")
+    # messages.info(request, "Equipamento removido.")
     
     if redirect_func_id:
         return redirect('equipamentos:equipamentos_funcionario', funcionario_id=redirect_func_id)
@@ -108,7 +110,7 @@ def desvincular_equipamento(request, id):
     equipamento.dispositivo = None
     equipamento.save()
     
-    messages.success(request, "Equipamento desvinculado e devolvido ao estoque.")
+    # messages.success(request, "Equipamento desvinculado e devolvido ao estoque.")
     
     if redirect_func_id:
         return redirect('equipamentos:equipamentos_funcionario', funcionario_id=redirect_func_id)
@@ -138,12 +140,15 @@ def entrada_estoque(request):
         prefixo_nome = request.POST.get('prefixo_nome') or "Item de Estoque"
 
         if quantidade < 1:
-            messages.error(request, "A quantidade deve ser maior que zero.")
+            # messages.error(request, "A quantidade deve ser maior que zero.")
             return redirect('equipamentos:dashboard_estoque')
 
         novos_itens = []
         for i in range(quantidade):
-            nome_final = f"{prefixo_nome} - {i+1}" 
+            # --- MUDANÇA AQUI ---
+            # Antes estava: nome_final = f"{prefixo_nome} - {i+1}"
+            # Agora usamos apenas o nome puro:
+            nome_final = prefixo_nome 
             
             novos_itens.append(EquipamentoAuxiliar(
                 nome=nome_final,
@@ -155,7 +160,7 @@ def entrada_estoque(request):
         
         EquipamentoAuxiliar.objects.bulk_create(novos_itens)
         
-        messages.success(request, f"{quantidade} novos itens do tipo '{tipo}' adicionados ao estoque!")
+        # messages.success(request, f"{quantidade} novos itens adicionados!")
         return redirect('equipamentos:dashboard_estoque')
 
     return redirect('equipamentos:dashboard_estoque')
@@ -179,10 +184,10 @@ def acao_manutencao_equipamento(request, id):
     
     if item.status == 'MANUTENCAO':
         item.status = 'DISPONIVEL'
-        messages.success(request, f"{item.nome} retornou da manutenção.")
+        # messages.success(request, f"{item.nome} retornou da manutenção.")
     else:
         item.status = 'MANUTENCAO'
-        messages.warning(request, f"{item.nome} enviado para manutenção.")
+        # messages.warning(request, f"{item.nome} enviado para manutenção.")
     
     item.save()
     return redirect('equipamentos:listar_por_tipo', tipo_codigo=item.tipo_equipamento_aux)

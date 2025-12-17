@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.db.models import Count, Q 
+from django.core.paginator import Paginator # <--- IMPORTANTE: Import do Paginator adicionado
 
 # Importa os models locais
 from .models import Dispositivo, STATUS_CHOICES, TIPO_DISPOSITIVO_CHOICES
@@ -13,17 +14,39 @@ from funcionarios.models import Funcionario
 
 @login_required
 def listar_dispositivos(request):
-    # Busca todos os dispositivos ordenados pelo código
-    dispositivos = Dispositivo.objects.all().order_by('codigo')
+    # 1. Inicia a busca básica otimizada
+    queryset = Dispositivo.objects.select_related('funcionario').all().order_by('codigo')
     
-    # Busca apenas funcionários ATIVOS para preencher o <select>
+    # 2. LÓGICA DE BUSCA (NOVA)
+    # Pega o termo digitado na URL (ex: ?busca=NB-001)
+    busca = request.GET.get('busca')
+    status_filter = request.GET.get('status')
+    
+    # Filtra por texto
+    if busca:
+        queryset = queryset.filter(
+            Q(codigo__icontains=busca) | 
+            Q(funcionario__nome__icontains=busca)
+        )
+    
+    # Filtra por status
+    if status_filter:
+        queryset = queryset.filter(status=status_filter)
+    
+    # 3. Paginação (Aplica o paginator SOBRE o resultado filtrado)
+    paginator = Paginator(queryset, 20) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     funcionarios = Funcionario.objects.filter(status='ATIVO').order_by('nome')
 
     return render(request, 'dispositivos/listar_dispositivos.html', {
-        'dispositivos': dispositivos,
+        'dispositivos': page_obj,
         'tipos': TIPO_DISPOSITIVO_CHOICES,
         'funcionarios': funcionarios,
         'status': STATUS_CHOICES,
+        'busca_atual': busca,
+        'status_atual': status_filter
     })
 
 @login_required
@@ -152,7 +175,7 @@ def exportar_dispositivos_csv(request):
         #
         lista_equipamentos = [str(eq) for eq in d.equipamentoauxiliar_set.all()] 
         
-       
+        
         equipamentos_str = " | ".join(lista_equipamentos) if lista_equipamentos else "Nenhum"
         
         writer.writerow([
@@ -167,15 +190,16 @@ def exportar_dispositivos_csv(request):
 
 @login_required
 def dashboard_dispositivos(request):
-    # 1. Totais Gerais (Os 3 Cards)
-    dados_gerais = Dispositivo.objects.aggregate(
+    # FILTRA SOMENTE NOTEBOOKS
+    queryset = Dispositivo.objects.filter(tipo_dispositivo='NOTEBOOK')
+
+    dados_gerais = queryset.aggregate(
         total=Count('id'),
         ativos=Count('id', filter=Q(status='ATIVO')),
         disponiveis=Count('id', filter=Q(status='DISPONIVEL')),
         manutencao=Count('id', filter=Q(status='MANUTENCAO'))
     )
 
-    # 2. Distribuição por Tipo
     por_tipo = Dispositivo.objects.values('tipo_dispositivo').annotate(
         qtd=Count('id')
     ).order_by('-qtd')
@@ -184,3 +208,20 @@ def dashboard_dispositivos(request):
         'dados': dados_gerais,
         'por_tipo': por_tipo,
     })
+
+
+@login_required
+def api_dados_dashboard(request):
+    """
+    Retorna apenas os números em formato JSON para atualização via AJAX.
+    """
+    # FILTRA SOMENTE NOTEBOOKS
+    queryset = Dispositivo.objects.filter(tipo_dispositivo='NOTEBOOK')
+
+    dados = queryset.aggregate(
+        ativos=Count('id', filter=Q(status='ATIVO')),
+        disponiveis=Count('id', filter=Q(status='DISPONIVEL')),
+        manutencao=Count('id', filter=Q(status='MANUTENCAO'))
+    )
+    
+    return JsonResponse(dados)

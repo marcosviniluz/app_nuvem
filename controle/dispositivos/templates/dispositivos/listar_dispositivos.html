@@ -4,9 +4,9 @@
 
 {% block content %}
 
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
 <style>
     :root {
@@ -19,12 +19,18 @@
         background-color: #f5f7fb;
     }
 
-    .select2-container--open { z-index: 9999999 !important; }
-    .select2-container .select2-selection--single {
-        height: 38px !important;
-        border: 1px solid #dee2e6 !important;
-        display: flex;
-        align-items: center;
+    .ts-control {
+        border-radius: 0.375rem !important;
+        padding: 0.375rem 0.75rem !important;
+        border-color: #dee2e6 !important;
+        min-height: 38px;
+    }
+    .ts-wrapper.focus .ts-control {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+        border-color: #86b7fe !important;
+    }
+    .ts-dropdown {
+        z-index: 99999 !important;
     }
 
     .page-header {
@@ -40,7 +46,6 @@
         margin: 0;
     }
 
-    /* Botão Principal */
     .btn-tech-primary {
         background: linear-gradient(135deg, var(--brand-primary), #3b3b58);
         color: white;
@@ -58,10 +63,9 @@
         box-shadow: 0 6px 15px rgba(30, 30, 47, 0.3);
     }
 
-    /* --- NOVO ESTILO DO BOTÃO CSV --- */
     .btn-tech-outline-success {
         background: white;
-        color: #198754; /* Verde Bootstrap */
+        color: #198754; 
         border: 1px solid #198754;
         border-radius: 50px;
         padding: 0.6rem 1.5rem;
@@ -78,7 +82,6 @@
         box-shadow: 0 4px 10px rgba(25, 135, 84, 0.2);
         transform: translateY(-2px);
     }
-    /* -------------------------------- */
 
     .search-container {
         position: relative;
@@ -97,7 +100,6 @@
 
     .search-input:focus {
         border-color: var(--brand-accent);
-        box-shadow: 0 5px 20px rgba(214, 51, 132, 0.15);
         outline: none;
     }
 
@@ -189,6 +191,29 @@
         border-color: var(--brand-accent);
         color: var(--brand-accent);
     }
+
+    /* Estilo da Paginação */
+    .pagination .page-link {
+        border: none;
+        color: var(--brand-primary);
+        margin: 0 3px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: var(--brand-primary);
+        color: white;
+        box-shadow: 0 2px 5px rgba(30, 30, 47, 0.2);
+    }
+    .pagination .page-link:hover {
+        background-color: #eef0f5;
+        color: var(--brand-primary);
+    }
+    .pagination .page-item.disabled .page-link {
+        color: #adb5bd;
+        background-color: transparent;
+    }
 </style>
 
 <div class="page-header">
@@ -205,27 +230,34 @@
     </div>
 </div>
 
-<div class="row mb-4 g-3">
+<div class="row mb-4 g-3" id="formBusca">
     <div class="col-md-8">
         <div class="search-container mb-0">
             <i class="bi bi-search search-icon"></i>
-            <input type="text" id="inputBuscaCodigo" class="search-input" placeholder="Buscar por código, tipo ou funcionário...">
+            <input type="text" 
+                   id="inputBuscaCodigo"
+                   name="busca" 
+                   class="search-input" 
+                   placeholder="Buscar por código ou funcionário..."
+                   value="{{ busca_atual|default:'' }}">
         </div>
     </div>
     <div class="col-md-4">
         <div class="position-relative">
             <i class="bi bi-funnel-fill search-icon" style="z-index: 10;"></i>
-            <select id="filtroStatus" class="search-input form-select" style="cursor: pointer;">
+            <select id="filtroStatus" name="status" class="search-input form-select" style="cursor: pointer;">
                 <option value="">Todos os Status</option>
                 {% for val, lab in status %}
-                    <option value="{{ val }}">{{ lab }}</option>
+                    <option value="{{ val }}" {% if status_atual == val %}selected{% endif %}>
+                        {{ lab }}
+                    </option>
                 {% endfor %}
             </select>
         </div>
     </div>
 </div>
 
-<div class="tech-card table-responsive">
+<div class="tech-card table-responsive mb-4">
     <table class="table table-tech mb-0" id="tabelaDispositivos">
         <thead>
             <tr>
@@ -291,12 +323,54 @@
                 </td>
             </tr>
             {% empty %}
-            <tr class="no-results"><td colspan="6" class="text-center py-5 text-muted">Nenhum dispositivo cadastrado no momento.</td></tr>
+            <tr><td colspan="6" class="text-center py-5 text-muted">Nenhum dispositivo encontrado.</td></tr>
             {% endfor %}
-            <tr id="msgNenhumResultado" style="display: none;"><td colspan="6" class="text-center py-4 text-muted">Nenhum dispositivo encontrado com esse código.</td></tr>
         </tbody>
     </table>
 </div>
+
+<div id="paginacaoContainer">
+    {% if dispositivos.has_other_pages %}
+    <nav aria-label="Navegação de página">
+        <ul class="pagination justify-content-center">
+            
+            {% if dispositivos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ dispositivos.previous_page_number }}{% if busca_atual %}&busca={{ busca_atual }}{% endif %}{% if status_atual %}&status={{ status_atual }}{% endif %}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Anterior</a>
+                </li>
+            {% endif %}
+
+            {% for i in dispositivos.paginator.page_range %}
+                {% if dispositivos.number == i %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if busca_atual %}&busca={{ busca_atual }}{% endif %}{% if status_atual %}&status={{ status_atual }}{% endif %}">{{ i }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if dispositivos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ dispositivos.next_page_number }}{% if busca_atual %}&busca={{ busca_atual }}{% endif %}{% if status_atual %}&status={{ status_atual }}{% endif %}">Próxima</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#">Próxima</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    <p class="text-center text-muted small mt-2">
+        Mostrando página {{ dispositivos.number }} de {{ dispositivos.paginator.num_pages }}
+    </p>
+    {% endif %}
+</div>
+
 
 <div class="modal fade" id="modalAddDispositivo" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -323,7 +397,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label text-muted small fw-bold">Funcionário Responsável</label>
-                            <select name="funcionario" class="form-select select2-pessoa">
+                            <select id="select-funcionario-add" name="funcionario" placeholder="Digite para buscar...">
                                 <option value="">— Nenhum —</option>
                                 {% for f in funcionarios %}
                                     <option value="{{ f.id }}">{{ f.nome }} - {{ f.email }}</option>
@@ -374,10 +448,10 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-muted small fw-bold">Funcionário</label>
-                            <select id="editFuncionario" name="funcionario" class="form-select select2-pessoa">
+                            <select id="select-funcionario-edit" name="funcionario" placeholder="Digite para buscar...">
                                 <option value="">— Nenhum —</option>
                                 {% for f in funcionarios %}
-                                    <option value="{{ f.id }}">{{ f.nome }}</option>
+                                    <option value="{{ f.id }}">{{ f.nome }} - {{ f.email }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -400,75 +474,127 @@
 </div>
 
 <script>
+var tomSelectAdd;
+var tomSelectEdit;
+
 $(document).ready(function() {
 
-    function filtrarTabela() {
-        var termoBusca = $("#inputBuscaCodigo").val().toLowerCase();
-        var statusFiltro = $("#filtroStatus").val();
-        var hasResult = false;
+    // --- TOM SELECT ---
+    var tsConfig = {
+        create: false,
+        sortField: { field: "text", direction: "asc" },
+        dropdownParent: 'body'
+    };
+    tomSelectAdd = new TomSelect('#select-funcionario-add', tsConfig);
+    tomSelectEdit = new TomSelect('#select-funcionario-edit', tsConfig);
 
-        $("#tabelaDispositivos tbody tr:not(#msgNenhumResultado):not(.no-results)").each(function() {
-            var row = $(this);
-            
-            var textoCodigo = row.find(".codigo-badge").text().toLowerCase();
-            var textoFuncionario = row.text().toLowerCase();
-            var matchTexto = (textoCodigo.indexOf(termoBusca) > -1 || textoFuncionario.indexOf(termoBusca) > -1);
 
-            var rowStatus = row.data("status");
-            var matchStatus = (statusFiltro === "") || (rowStatus == statusFiltro);
+    // ======================================================
+    //     BUSCA EM TEMPO REAL COM PAGINAÇÃO (AJAX)
+    // ======================================================
+    
+    let timerBusca; // Timer para delay na digitação
 
-            if(matchTexto && matchStatus) {
-                row.show();
-                hasResult = true;
-            } else {
-                row.hide();
+    function realizarBusca() {
+        let termo = $("#inputBuscaCodigo").val();
+        let status = $("#filtroStatus").val();
+        
+        // Pega a URL atual sem os parâmetros antigos
+        let url = window.location.pathname; 
+
+        // Feedback visual (opcional)
+        $("#tabelaDispositivos tbody").css("opacity", "0.5");
+
+        // Envia o pedido para o Django
+        $.ajax({
+            url: url,
+            data: {
+                'busca': termo,
+                'status': status,
+                'page': 1 // Ao buscar, sempre volta para a página 1
+            },
+            success: function(data) {
+                // 'data' é o HTML inteiro retornado. Extraímos partes dele.
+                
+                let novaTabela = $(data).find("#tabelaDispositivos tbody").html();
+                let novaPaginacao = $(data).find("#paginacaoContainer").html(); // Busca pelo ID do container
+                
+                if (!novaPaginacao) {
+                    novaPaginacao = ""; 
+                }
+
+                // Atualiza o DOM
+                $("#tabelaDispositivos tbody").html(novaTabela).css("opacity", "1");
+                $("#paginacaoContainer").html(novaPaginacao);
+                
+                // Reativa os tooltips nos novos elementos
+                reativarTooltips();
             }
         });
-
-        if (!hasResult) {
-            $("#msgNenhumResultado").show();
-        } else {
-            $("#msgNenhumResultado").hide();
-        }
     }
 
-    $("#inputBuscaCodigo").on("keyup", filtrarTabela);
-    $("#filtroStatus").on("change", filtrarTabela);
+    // Evento: Digitação no campo de busca (com delay)
+    $("#inputBuscaCodigo").on("keyup", function() {
+        clearTimeout(timerBusca);
+        timerBusca = setTimeout(realizarBusca, 500); // Espera 500ms
+    });
 
-    $('.select2-pessoa').each(function() {
-        $(this).select2({
-            placeholder: "Selecione o funcionário",
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $(this).closest('.modal')
+    // Evento: Mudança no filtro de Status
+    $("#filtroStatus").on("change", function() {
+        realizarBusca();
+    });
+
+    // Previne o Enter de recarregar a página (opcional, já que keyup resolve)
+    // Se quiser que o Enter force a busca imediata:
+    $("#inputBuscaCodigo").on("keydown", function(e) {
+        if(e.key === "Enter") {
+            e.preventDefault();
+            clearTimeout(timerBusca);
+            realizarBusca();
+        }
+    });
+
+    // ======================================================
+    
+    // Tooltips
+    function reativarTooltips() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl)
         });
-    });
+    }
+    reativarTooltips();
 
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-    });
-
-    $(".btnEditar").click(function () {
+    // --- BOTÃO EDITAR (Delegate) ---
+    $(document).on("click", ".btnEditar", function () {
         let url = $(this).data("url");
         let codigo = $(this).data("codigo");
         let tipo = $(this).data("tipo");
-        let funcionario = $(this).data("funcionario") || "";
+        let funcionarioId = $(this).data("funcionario"); 
         let status = $(this).data("status") || "DISPONIVEL";
 
         $("#editCodigo").val(codigo);
-        $("#editTipo").val(tipo).change();
+        $("#editTipo").val(tipo);
         $("#editStatus").val(status);
-        $("#editFuncionario").val(funcionario).trigger("change");
-
         $("#formEditar").attr("action", url);
+
+        tomSelectEdit.clear(true); 
+        if(funcionarioId) {
+            tomSelectEdit.setValue(funcionarioId);
+        }
+
         $("#modalEditDispositivo").modal("show");
     });
 
-    $(".btnEquipamentos").click(function () {
-        let id = $(this).data("id");
-        let codigo = $(this).data("codigo");
+    // Resetar form adicionar
+    $('#modalAddDispositivo').on('hidden.bs.modal', function () {
+        tomSelectAdd.clear();
+        $(this).find('form')[0].reset();
+    });
 
+    // Botão Equipamentos (Delegate)
+    $(document).on("click", ".btnEquipamentos", function () {
+        let id = $(this).data("id");
         $("#modalEquipamentos").modal("show");
         $("#equipamentosContent").html("<div class='p-5 text-center'><div class='spinner-border text-primary'></div><p class='mt-3 text-muted'>Carregando itens...</p></div>");
 

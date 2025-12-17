@@ -5,8 +5,7 @@ from . import views
 app_name = 'dispositivos'
 
 urlpatterns = [
-    # Como este arquivo será incluído com o prefixo 'dispositivos/', 
-    # a rota vazia '' equivale a /dispositivos/
+  
     path('', views.listar_dispositivos, name='listar_dispositivos'),
     
     path('add/', views.criar_dispositivo, name='criar_dispositivo'),
@@ -17,8 +16,9 @@ urlpatterns = [
     
     path('desvincular/<int:id>/', views.desvincular_dispositivo, name='desvincular_dispositivo'),
 
-    # --- NOVA ROTA PARA EXPORTAR CSV ---
     path('exportar-csv/', views.exportar_dispositivos_csv, name='exportar_csv'),
     
     path('dashboard/', views.dashboard_dispositivos, name='dashboard_dispositivos'),
+
+    path('api/dashboard-data/', views.api_dados_dashboard, name='api_dados_dashboard'),
 ]
